@@ -1,0 +1,15 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  namespace: ${K8SW_NAMESPACE}
+  name: k8s-watchdog-pvc
+  labels:
+    app: k8s-watchdog
+spec:
+  storageClassName: ${K8SW_STORAGE_CLASS_NAME}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

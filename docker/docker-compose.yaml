@@ -1,0 +1,39 @@
+version: '3.0'
+services:
+  k8s-watchdog-stack:
+    container_name: k8s-watchdog
+    image: k8s-watchdog:latest
+    restart: always
+    network_mode: bridge
+    command: ["python3", "main.py"]
+    working_dir: /app
+    volumes:
+      - k8s_watchdog_vol:/app/logs
+      - k8s_watchdog_config:/app/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+    - 'DEBUG=True'
+    - 'LOG_SAVE=True'
+    - 'PROCESS_LOAD_KUBE_CONFIG=True'
+    - 'PROCESS_KUBE_CONFIG=./config/config.yaml'
+    - 'PROCESS_CYCLE_SEC=120'
+    - 'TELEGRAM_ENABLE=True'
+    - 'TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}'
+    - 'TELEGRAM_TOKEN=${TELEGRAM_TOKEN}'
+    - 'K8S_NODE=True'
+    - 'K8S_PODS=True'
+    - 'K8S_DEPLOYMENT=True'
+    - 'K8S_STATEFUL_SETS=False'
+    - 'K8S_REPLICA_SETS=False'
+    - 'K8S_DAEMON_SETS=False'
+    - 'K8S_PVC=True'
+    - 'K8S_PV=True'
+    - 'K8S_DEPLOYMENT_P0=False'
+    - 'K8S_STATEFUL_SETS_P0=False'
+    - 'K8S_REPLICA_SETS_P0=False'
+    - 'K8S_DAEMON_SETS_P0=False'
+volumes:
+  k8s_watchdog_vol:
+    external: true
+  k8s_watchdog_config:
+    external: true

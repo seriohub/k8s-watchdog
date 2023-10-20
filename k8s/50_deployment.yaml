@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-watchdog
+  namespace: ${K8SW_NAMESPACE}
+  labels:
+    app: k8s-watchdog
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: backend
+  template:
+    metadata:
+      labels:
+        tier: backend
+    spec:
+      serviceAccountName: k8s-read-only-service-account
+      containers:
+        - name: k8s-monitoring
+          image: ${K8SW_DOCKER_REGISTRY}/${K8SW_DOCKER_IMAGE}
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: k8s-configmap
+          volumeMounts:
+            - name: app
+              mountPath: /app/logs
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1256Mi"
+              cpu: "500m"
+      volumes:
+      - name: app
+        persistentVolumeClaim:
+          claimName: k8s-watchdog-pvc

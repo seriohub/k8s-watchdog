@@ -1,0 +1,10 @@
+venv/
+.idea/
+__pycache__/
+*.log
+*.sh
+Jenkinsfile
+Makefile
+src/tmp/
+*.env
+docker-compose_k8s.yml
