@@ -48,28 +48,28 @@ Receive the alert and the solved message via Telegram, allowing immediate action
 
 ## Configuration
 
-| FIELD                       | TYPE   | DEFAULT | DESCRIPTION                                                                                                                                        |
-|-----------------------------|--------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `DEBUG`                     | Bool   | False   | View debugging information.                                                                                                                        |
-| `LOG_SAVE`                  | Bool   | False   | Save log to files                                                                                                                                  |
-| `PROCESS_LOAD_KUBE_CONFIG`* | Bool   | True    | Set False if it runs on k8s.                                                                                                                       |
-| `PROCESS_KUBE_CONFIG`       | String |         | Define kube config file. It's mandatory when the script runs out the k8s cluster, in a docker image or if the pc does not have k8s client command  |
-| `PROCESS_CYCLE_SEC`         | Int    | 120     | Cycle time (seconds)                                                                                                                               |
-| `TELEGRAM_ENABLE`    *      | Bool   | True    | Enable sending messages                                                                                                                            |
-| `TELEGRAM_API_TOKEN` *      | String |         | Token for access to Telegram bot via Http API                                                                                                      |
-| `TELEGRAM_CHAT_ID`   *      | String |         | Telegram chat id where send the notifications                                                                                                      |
-| `K8S_NODE`                  | Bool   | True    | Enable Nodes watcher                                                                                                                               |
-| `K8S_PODS`                  | Bool   | True    | Enable Pods watcher                                                                                                                                |
-| `K8S_DEPLOYMENT`            | Bool   | True    | Enable Deployment watcher                                                                                                                          |
-| `K8S_STATEFUL_SETS`         | Bool   | True    | Enable StatefulSets watcher                                                                                                                        |
-| `K8S_REPLICA_SETS`          | Bool   | True    | Enable ReplicaSets watcher                                                                                                                         |
-| `K8S_DAEMON_SETS`           | Bool   | True    | Enable DaemonSet watcher                                                                                                                           |
-| `K8S_PVC`                   | Bool   | True    | Enable Persistent Volume Claim watcher                                                                                                             |
-| `K8S_PV`                    | Bool   | True    | Enable Persistent Volume watcher                                                                                                                   |
-| `K8S_DEPLOYMENT_P0`         | Bool   | False   | Load the Deployment items where the pods count is 0                                                                                                |
-| `K8S_STATEFUL_SETS_P0`      | Bool   | False   | Load the StatefulSets items where the pod count is 0                                                                                               |
-| `K8S_REPLICA_SETS_P0`       | Bool   | False   | Load the ReplicaSets items where the pod count is 0                                                                                                |
-| `K8S_DAEMON_SETS_P0`        | Bool   | False   | Load DaemonSet items where the pods count is scaled to 0 or is equal to 0                                                                          |
+| FIELD                       | TYPE   | DEFAULT | DESCRIPTION                                                                                                                                               |
+|-----------------------------|--------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `DEBUG`                     | Bool   | False   | View debugging information.                                                                                                                               |
+| `LOG_SAVE`                  | Bool   | False   | Save log to files                                                                                                                                         |
+| `PROCESS_LOAD_KUBE_CONFIG`* | Bool   | True    | Set False if it runs on k8s.                                                                                                                              |
+| `PROCESS_KUBE_CONFIG`       | String |         | Path to the kube config file. This is mandatory when the script runs outside the Kubernetes cluster, either in a docker container or as a native script.  |
+| `PROCESS_CYCLE_SEC`         | Int    | 120     | Cycle time (seconds)                                                                                                                                      |
+| `TELEGRAM_ENABLE`    *      | Bool   | True    | Enable sending messages                                                                                                                                   |
+| `TELEGRAM_API_TOKEN` *      | String |         | Token for access to Telegram bot via Http API                                                                                                             |
+| `TELEGRAM_CHAT_ID`   *      | String |         | Telegram chat id where send the notifications                                                                                                             |
+| `K8S_NODE`                  | Bool   | True    | Enable Nodes watcher                                                                                                                                      |
+| `K8S_PODS`                  | Bool   | True    | Enable Pods watcher                                                                                                                                       |
+| `K8S_DEPLOYMENT`            | Bool   | True    | Enable Deployment watcher                                                                                                                                 |
+| `K8S_STATEFUL_SETS`         | Bool   | True    | Enable StatefulSets watcher                                                                                                                               |
+| `K8S_REPLICA_SETS`          | Bool   | True    | Enable ReplicaSets watcher                                                                                                                                |
+| `K8S_DAEMON_SETS`           | Bool   | True    | Enable DaemonSet watcher                                                                                                                                  |
+| `K8S_PVC`                   | Bool   | True    | Enable Persistent Volume Claim watcher                                                                                                                    |
+| `K8S_PV`                    | Bool   | True    | Enable Persistent Volume watcher                                                                                                                          |
+| `K8S_DEPLOYMENT_P0`         | Bool   | False   | Load the Deployment items where the pods count is 0                                                                                                       |
+| `K8S_STATEFUL_SETS_P0`      | Bool   | False   | Load the StatefulSets items where the pod count is 0                                                                                                      |
+| `K8S_REPLICA_SETS_P0`       | Bool   | False   | Load the ReplicaSets items where the pod count is 0                                                                                                       |
+| `K8S_DAEMON_SETS_P0`        | Bool   | False   | Load DaemonSet items where the pods count is scaled to 0 or is equal to 0                                                                                 |
 
 *Mandatory parameters
 
