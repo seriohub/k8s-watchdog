@@ -52,6 +52,12 @@ class KubernetesStatusRun:
         seconds_waiting = self.cycle_seconds + 1
         index = 0
         list_ns = []
+
+        # LS 2023.10.21 add cluster name
+        cluster_name = self.k8s_stat.get_cluster_name()
+        data_res = {self.k8s_config.CLUSTER_Name_key: cluster_name}
+        await self.__put_in_queue(data_res)
+
         while True:
             try:
                 if seconds_waiting > self.cycle_seconds:

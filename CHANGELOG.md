@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [0.1.1] - 2023-10-21
+ 
+**Implemented enhancements:**
+- add cluster name in the message details
+
+**Fixed bugs:**
+- during the loading of .env keys, the system printed wrong default value
+
 ## [0.1.0] - 2023-10-20
  
 ### First Commit

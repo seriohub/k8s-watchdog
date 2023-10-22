@@ -13,7 +13,8 @@ class KubernetesGetDeployment:
                  debug_on=True,
                  logger=None,
                  k8s_api_instance=None,
-                 k8s_apps_instance=None):
+                 k8s_apps_instance=None,
+                 cluster_name=None):
 
         self.print_helper = PrintHelper('kubernetes_get_deployment',
                                         logger)
@@ -26,6 +27,7 @@ class KubernetesGetDeployment:
                                                     k8s_api_instance)
         self.api_instance = k8s_api_instance
         self.apps_instance = k8s_apps_instance
+        self.cluster_name = cluster_name
 
     @handle_exceptions_method
     def get_deployment(self,
@@ -68,7 +70,8 @@ class KubernetesGetDeployment:
                             self.print_helper.info_if(self.print_debug,
                                                       f"Deployment:{st.metadata.name} in {st.metadata.namespace}")
                             # print(st.status)
-                            details = {'namespace': st.metadata.namespace,
+                            details = {'cluster': self.cluster_name,
+                                       'namespace': st.metadata.namespace,
                                        'available_replicas': st.status.available_replicas,
                                        'replicas': st.status.replicas,
                                        'ready_replicas': st.status.ready_replicas}

@@ -13,7 +13,8 @@ class KubernetesGetDms:
                  debug_on=True,
                  logger=None,
                  k8s_api_instance=None,
-                 k8s_apps_instance=None):
+                 k8s_apps_instance=None,
+                 cluster_name=None):
 
         self.print_helper = PrintHelper('kubernetes_get_dms',
                                         logger)
@@ -26,6 +27,8 @@ class KubernetesGetDms:
                                                     k8s_api_instance)
         self.api_instance = k8s_api_instance
         self.apps_instance = k8s_apps_instance
+
+        self.cluster_name = cluster_name
 
     @handle_exceptions_method
     def get_daemon_set(self,
@@ -65,7 +68,8 @@ class KubernetesGetDms:
                         if add_st_sets:
                             self.print_helper.info_if(self.print_debug,
                                                       f"DaemonSet:{st.metadata.name} in {st.metadata.namespace}")
-                            details = {'namespace': st.metadata.namespace,
+                            details = {'cluster' : self.cluster_name,
+                                       'namespace': st.metadata.namespace,
                                        'current_number_scheduled': st.status.current_number_scheduled,
                                        'desired_number_scheduled': st.status.desired_number_scheduled,
                                        'number_available': st.status.number_available,

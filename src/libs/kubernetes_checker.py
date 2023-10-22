@@ -116,6 +116,7 @@ class KubernetesChecker:
                         # msg = f'{title} detail\n'
                         msg += f"----------\n"
                         msg += f"Name= {key_dict}\n"
+                        print(f"current_node:{current_node}")
                         for key, value in current_node.items():
                             key_value = True
                             if (enable_keys is None or
@@ -167,7 +168,7 @@ class KubernetesChecker:
                                                resolved=True)
 
         except Exception as err:
-            self.print_helper.error_and_exception(f"__process_key__", err)
+            self.print_helper.error_and_exception(f"__process_key__{title}", err)
 
     @handle_exceptions_async_method
     async def __unpack_data__(self, data):
@@ -178,7 +179,9 @@ class KubernetesChecker:
         self.print_helper.debug_if("__unpack_data")
         try:
             if isinstance(data, dict):
-                if self.k8s_config.NODE_key in data:
+                if self.k8s_config.CLUSTER_Name_key in data:
+                    await self.__process_cluster_name__(data)
+                elif self.k8s_config.NODE_key in data:
                     await self.__process_nodes__(data)
                 elif self.k8s_config.POD_key in data:
                     await self.__process_pods__(data)
@@ -231,6 +234,17 @@ class KubernetesChecker:
         self.old_node_status = nodes_status
 
     @handle_exceptions_async_method
+    async def __process_cluster_name__(self, data):
+        self.print_helper.info(f"__process_cluster_name__")
+
+        nodes_name = data[self.k8s_config.CLUSTER_Name_key]
+
+        self.print_helper.info(f"cluster name {nodes_name}")
+        if nodes_name is not None:
+            self.print_helper.info_if(self.print_debug, f"Flush last message")
+            await self.send_to_telegram(f"Cluster name= {nodes_name}")
+
+    @handle_exceptions_async_method
     async def __process_pods__(self, data):
         """
         Data type Pods
@@ -249,7 +263,8 @@ class KubernetesChecker:
         # 'own_name'
         await self.__process_key__(data=pods_status,
                                    old_data=self.old_pods,
-                                   enable_keys=['namespace',
+                                   enable_keys=['cluster',
+                                                'namespace',
                                                 'started',
                                                 'phase',
                                                 'own_controller',
@@ -267,7 +282,8 @@ class KubernetesChecker:
         self.print_helper.info_if(self.print_debug, f"Stateful Sets received")
         sts_status = data[self.k8s_config.SS_key]
         # await self.__process_stateful_sets__(sts_status)
-        enable_keys = ['namespace',
+        enable_keys = ['cluster',
+                       'namespace',
                        'available_replicas',
                        'replicas',
                        ]
@@ -286,7 +302,8 @@ class KubernetesChecker:
         self.print_helper.info_if(self.print_debug, f"Replica Sets received")
         sts_status = data[self.k8s_config.RS_key]
         # await self.__process_replica_sets__(sts_status)
-        enable_keys = ['namespace',
+        enable_keys = ['cluster',
+                       'namespace',
                        'available_replicas',
                        'replicas',
                        ]
@@ -305,7 +322,8 @@ class KubernetesChecker:
         self.print_helper.info_if(self.print_debug, f"Daemon Sets received")
         dmn_status = data[self.k8s_config.DS_key]
         # await self.__process_daemon_sets__(dmn_status)
-        enable_keys = ['namespace',
+        enable_keys = ['cluster',
+                       'namespace',
                        'current_number_scheduled',
                        'desired_number_scheduled',
                        'number_available',
@@ -326,7 +344,8 @@ class KubernetesChecker:
         """
         self.print_helper.info_if(self.print_debug, f"deployment received")
         dpl_status = data[self.k8s_config.DPL_key]
-        enable_keys = ['namespace',
+        enable_keys = ['cluster',
+                       'namespace',
                        'available_replicas',
                        'replicas',
                        ]
@@ -345,7 +364,8 @@ class KubernetesChecker:
         self.print_helper.info_if(self.print_debug, f"pv received")
         pv_status = data[self.k8s_config.PV_key]
         # await self.__process_pv__(pv_status)
-        enable_keys = ['namespace',
+        enable_keys = ['cluster',
+                       'namespace',
                        'phase',
                        'storage_class_name',
                        'pv.claim_ref_namespace',
@@ -364,7 +384,8 @@ class KubernetesChecker:
         """
         self.print_helper.info_if(self.print_debug, f"pvc received")
         pvc_status = data[self.k8s_config.PVC_key]
-        enable_keys = ['namespace',
+        enable_keys = ['cluster',
+                       'namespace',
                        'phase',
                        'storage_class_name',
                        ]

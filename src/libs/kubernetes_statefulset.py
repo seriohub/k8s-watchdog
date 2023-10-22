@@ -13,7 +13,8 @@ class KubernetesGetSfs:
                  debug_on=True,
                  logger=None,
                  k8s_api_instance=None,
-                 k8s_apps_instance=None):
+                 k8s_apps_instance=None,
+                 cluster_name=None):
 
         self.print_helper = PrintHelper('kubernetes_get_sfs', logger)
         self.print_debug = debug_on
@@ -25,6 +26,7 @@ class KubernetesGetSfs:
                                                     k8s_api_instance)
         self.api_instance = k8s_api_instance
         self.apps_instance = k8s_apps_instance
+        self.cluster_name = cluster_name
 
     @handle_exceptions_method
     def get_stateful_set(self,
@@ -68,7 +70,8 @@ class KubernetesGetSfs:
                         if add_st_sets:
                             self.print_helper.info_if(self.print_debug,
                                                       f"StatefulSets:{st.metadata.name} in {st.metadata.namespace}")
-                            details = {'namespace': st.metadata.namespace,
+                            details = {'cluster': self.cluster_name,
+                                       'namespace': st.metadata.namespace,
                                        'available_replicas': st.status.available_replicas,
                                        'current_replicas': st.status.current_replicas, 'replicas': st.status.replicas,
                                        'ready_replicas': st.status.ready_replicas}

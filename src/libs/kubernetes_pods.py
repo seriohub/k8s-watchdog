@@ -13,7 +13,8 @@ class KubernetesGetPods:
                  debug_on=True,
                  logger=None,
                  k8s_api_instance=None,
-                 k8s_apps_instance=None):
+                 k8s_apps_instance=None,
+                 cluster_name=None):
 
         self.print_helper = PrintHelper('kubernetes_get_pods', logger)
         self.print_debug = debug_on
@@ -25,6 +26,10 @@ class KubernetesGetPods:
                                                     k8s_api_instance)
         self.api_instance = k8s_api_instance
         self.apps_instance = k8s_apps_instance
+        self.cluster_name = cluster_name
+
+    def set_cluster_name(self, cluster_name):
+        self.cluster_name = cluster_name
 
     @handle_exceptions_method
     def get_pods(self,
@@ -88,7 +93,7 @@ class KubernetesGetPods:
                                 add_phase = True
                     else:
                         add_phase = True
-
+                    condition['cluster'] = self.cluster_name
                     condition['namespace'] = pod.metadata.namespace
                     condition['phase'] = pod.status.phase
 

@@ -12,7 +12,8 @@ class KubernetesGetPvPvc:
     def __init__(self,
                  debug_on=True,
                  logger=None,
-                 k8s_api_instance=None):
+                 k8s_api_instance=None,
+                 cluster_name=None):
 
         self.print_helper = PrintHelper('kubernetes_get_pv_pvc', logger)
         self.print_debug = debug_on
@@ -21,6 +22,7 @@ class KubernetesGetPvPvc:
                                   f"__init__")
         self.k8s_namespace = KubernetesGetNamespace(debug_on, logger)
         self.api_instance = k8s_api_instance
+        self.cluster_name = cluster_name
 
     @handle_exceptions_method
     def get_pvc_claim(self,
@@ -59,7 +61,8 @@ class KubernetesGetPvPvc:
                             self.print_helper.info_if(self.print_debug,
                                                       f"pvc:{st.metadata.name} in {st.metadata.namespace} phase "
                                                       f"{st.status.phase}")
-                            details = {'namespace': st.metadata.namespace,
+                            details = {'cluster': self.cluster_name,
+                                       'namespace': st.metadata.namespace,
                                        'phase': st.status.phase,
                                        'storage_class_name': st.spec.storage_class_name}
 
@@ -114,7 +117,8 @@ class KubernetesGetPvPvc:
                     self.print_helper.info_if(self.print_debug,
                                               f"pv:{st.metadata.name} in {st.metadata.namespace} phase "
                                               f"{st.status.phase}")
-                    details = {'namespace': st.metadata.namespace,
+                    details = {'cluster': self.cluster_name,
+                               'namespace': st.metadata.namespace,
                                'phase': st.status.phase,
                                'storage_class_name': st.spec.storage_class_name,
                                'pv.claim_ref': st.spec.claim_ref.name,

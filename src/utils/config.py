@@ -13,6 +13,10 @@ class ConfigProgram:
     @handle_exceptions_static_method
     def load_key(key, default, print_out: bool = True, mask_value: bool = False):
         value = os.getenv(key)
+        if value is None or \
+                len(value) == 0:
+            value = default
+
         if print_out:
             if mask_value and len(value) > 2:
                 index = int(len(value) / 2)
@@ -20,9 +24,7 @@ class ConfigProgram:
                 print(f"INFO    [Env] load_key.key={key} value={value[:index]}{partial}")
             else:
                 print(f"INFO    [Env] load_key.key={key} value={value}")
-        if value is None or \
-                len(value) == 0:
-            value = default
+
         return value
 
     @handle_exceptions_method
@@ -132,17 +134,17 @@ class ConfigProgram:
 
     @handle_exceptions_method
     def k8s_nodes_enable(self):
-        res = self.load_key('K8S_NODE', 'False')
+        res = self.load_key('K8S_NODE', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
 
     @handle_exceptions_method
     def k8s_pods_enable(self):
-        res = self.load_key('K8S_PODS', 'False')
+        res = self.load_key('K8S_PODS', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
 
     @handle_exceptions_method
     def k8s_deployment_enable(self):
-        res = self.load_key('K8S_DEPLOYMENT', 'False')
+        res = self.load_key('K8S_DEPLOYMENT', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
 
     @handle_exceptions_method
@@ -152,7 +154,7 @@ class ConfigProgram:
 
     @handle_exceptions_method
     def k8s_stateful_sets_enable(self):
-        res = self.load_key('K8S_STATEFUL_SETS', 'False')
+        res = self.load_key('K8S_STATEFUL_SETS', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
 
     @handle_exceptions_method
@@ -162,7 +164,7 @@ class ConfigProgram:
 
     @handle_exceptions_method
     def k8s_replica_sets_enable(self):
-        res = self.load_key('K8S_REPLICA_SETS', 'False')
+        res = self.load_key('K8S_REPLICA_SETS', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
 
     @handle_exceptions_method
@@ -172,7 +174,7 @@ class ConfigProgram:
 
     @handle_exceptions_method
     def k8s_daemons_sets_enable(self):
-        res = self.load_key('K8S_DAEMON_SETS', 'False')
+        res = self.load_key('K8S_DAEMON_SETS', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
 
     @handle_exceptions_method
@@ -182,17 +184,19 @@ class ConfigProgram:
 
     @handle_exceptions_method
     def k8s_pvc_enable(self):
-        res = self.load_key('K8S_PVC', 'False')
+        res = self.load_key('K8S_PVC', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
 
     @handle_exceptions_method
     def k8s_pv_enable(self):
-        res = self.load_key('K8S_PV', 'False')
+        res = self.load_key('K8S_PV', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
 
 
 class ConfigK8sProcess:
     def __init__(self):
+        self.CLUSTER_Name_key = 'cluster'
+
         self.POD_enable = True
         self.POD_key = 'pods'
 

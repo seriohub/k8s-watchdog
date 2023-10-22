@@ -1,6 +1,8 @@
 import os
 
-from kubernetes import client, config
+import kubernetes
+from kubernetes import client
+from kubernetes import config
 from utils.print_helper import PrintHelper
 from libs.kubernetes_nodes import KubernetesGetNodes
 from libs.kubernetes_namespace import KubernetesGetNamespace
@@ -36,7 +38,7 @@ class KubernetesStatus:
 
                 if os.path.isfile(kube_config_file):
                     load_default = False
-                    config.load_kube_config(config_file=kube_config_file)
+                    kubernetes.config.load_kube_config(config_file=kube_config_file)
                 else:
                     load_default = True
                     self.print_helper.error(f"config file"
@@ -46,24 +48,72 @@ class KubernetesStatus:
             if kube_config_load_method:
                 self.print_helper.info_if(self.print_debug,
                                           f"load_kube_config")
-                config.load_kube_config()
+                kubernetes.config.load_kube_config()
             else:
                 self.print_helper.info_if(self.print_debug,
                                           f"load_incluster_config")
 
-                config.load_incluster_config()
+                kubernetes.config.load_incluster_config()
+
+        from kubernetes import config
 
         self.api_instance = client.CoreV1Api()
         self.apps_instance = client.AppsV1Api()
 
-        self.k8s_nodes = KubernetesGetNodes(debug_on, logger, self.api_instance)
-        self.k8s_namespace = KubernetesGetNamespace(debug_on, logger, self.api_instance)
-        self.k8s_pods = KubernetesGetPods(debug_on, logger, self.api_instance, self.apps_instance)
-        self.k8s_sfs = KubernetesGetSfs(debug_on, logger, self.api_instance, self.apps_instance)
-        self.k8s_rps = KubernetesGetRps(debug_on, logger, self.api_instance, self.apps_instance)
-        self.k8s_deployment = KubernetesGetDeployment(debug_on, logger, self.api_instance, self.apps_instance)
-        self.k8s_dms = KubernetesGetDms(debug_on, logger, self.api_instance, self.apps_instance)
-        self.k8s_pv_c = KubernetesGetPvPvc(debug_on, logger, self.api_instance)
+        self.cluster_name = self.get_cluster_name()
+
+        self.k8s_nodes = KubernetesGetNodes(debug_on,
+                                            logger,
+                                            self.api_instance,
+                                            cluster_name=self.cluster_name)
+        self.k8s_namespace = KubernetesGetNamespace(debug_on,
+                                                    logger,
+                                                    self.api_instance)
+        self.k8s_pods = KubernetesGetPods(debug_on,
+                                          logger,
+                                          self.api_instance,
+                                          self.apps_instance,
+                                          cluster_name=self.cluster_name)
+        self.k8s_sfs = KubernetesGetSfs(debug_on,
+                                        logger,
+                                        self.api_instance,
+                                        self.apps_instance,
+                                        cluster_name=self.cluster_name)
+        self.k8s_rps = KubernetesGetRps(debug_on,
+                                        logger,
+                                        self.api_instance,
+                                        self.apps_instance,
+                                        cluster_name=self.cluster_name)
+        self.k8s_deployment = KubernetesGetDeployment(debug_on,
+                                                      logger,
+                                                      self.api_instance,
+                                                      self.apps_instance,
+                                                      cluster_name=self.cluster_name)
+        self.k8s_dms = KubernetesGetDms(debug_on,
+                                        logger,
+                                        self.api_instance,
+                                        self.apps_instance,
+                                        cluster_name=self.cluster_name)
+        self.k8s_pv_c = KubernetesGetPvPvc(debug_on,
+                                           logger,
+                                           self.api_instance,
+                                           cluster_name=self.cluster_name)
+
+    def get_cluster_name(self):
+        try:
+            self.print_helper.info(f"get_cluster_name")
+            cluster_context = config.kube_config.list_kube_config_contexts()
+            self.print_helper.info_if(self.print_debug,
+                                      f"get_cluster_name:context {cluster_context}")
+            cluster_name = cluster_context[1]['context']['cluster']
+            self.print_helper.info_if(self.print_debug,
+                                      f"get_cluster_name:cluster name  {cluster_name}")
+            self.cluster_name = cluster_name
+
+            return cluster_name
+        except Exception as err:
+            self.print_helper.error_and_exception(f"get_cluster_name", err)
+            return None
 
     def get_node_list(self, only_problem=False):
         return self.k8s_nodes.get_node_list(only_problem)
@@ -128,4 +178,5 @@ class KubernetesStatus:
     def get_pv(self,
                phase: str = 'Bound',
                equal_to_phase=False):
-        return self.k8s_pv_c.get_pv(phase, equal_to_phase)
+        return self.k8s_pv_c.get_pv(phase,
+                                    equal_to_phase)
