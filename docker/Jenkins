@@ -5,8 +5,7 @@ pipeline {
         // Environment variables
         GIT_SOURCE_CODE = "https://github.com/seriohub/k8s-watchdog" //Source code repository
         DOCKER_HUB = "${env.DEFAULT_DOCKER_REGISTRY}" //Default docker registry (Global environment variable setting)
-        //DOCKER_PROJECT = "k8s-watchdog" //project name
-        DOCKER_PROJECT = "dserio83" //project name
+        DOCKER_PROJECT = "${env.K8S_WATCHDOG_PNAME}"  //project name
         DOCKERHUB_CREDENTIALS = credentials('DEFAULT_DOCKER_CREDENTIALS') //Credential stored in Jenkins Credential for logging in the HUB
         TARGET="k8s-watchdog"
         }
