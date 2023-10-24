@@ -117,6 +117,21 @@ class KubernetesStatus:
             self.print_helper.error_and_exception(f"get_cluster_name_from_config_file", err)
             return None
 
+    def get_cluster_name_from_in_cluster_config(self):
+        try:
+            cluster_name = None
+            if self.k8s_in_cluster:
+                current_context = config.list_kube_config_contexts()[1]
+                # The second element contains the current context
+
+                if current_context:
+                    cluster_name = current_context.get('context').get('cluster')
+
+            return cluster_name
+        except Exception as err:
+            self.print_helper.error_and_exception(f"get_cluster_name_from_in_cluster_config", err)
+            return None
+
     def get_cluster_name(self):
         cluster_name = "Unknown"
         try:
@@ -131,6 +146,10 @@ class KubernetesStatus:
             # self.cluster_name = cluster_name
 
             cluster_name = self.get_cluster_name_from_config_file()
+
+            if cluster_name is None:
+                cluster_name = self.get_cluster_name_from_in_cluster_config()
+
             if cluster_name is None:
                 # Retrieve information about the current cluster
                 cluster_info = self.api_instance.read_namespaced_config_map("kube-root-ca.crt",
