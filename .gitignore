@@ -3,7 +3,6 @@ venv/
 __pycache__/
 *.log
 *.sh
-Jenkinsfile
 Makefile
 src/tmp/
 *.env

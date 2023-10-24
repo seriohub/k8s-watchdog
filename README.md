@@ -113,38 +113,37 @@ Clone the repository:
    1. Navigate to the [docker](docker) folder
    2. Setup mandatory parameters in the docker-compose.yaml file ([docker-compose.yaml](docker/docker-compose.yaml))
 
-   **Note:** Instead of editing the docker-compose.yaml file, you can create and edit .env file (you can start from [.env.template](docker/.env.template)) file under [docker](docker) folder and use the docker-compose.yaml default  values.
+      **Note:** Instead of editing the docker-compose.yaml file, you can create and edit .env file (you can start from [.env.template](docker/.env.template)) file under [docker](docker) folder and use the docker-compose.yaml default  values.
+2. Docker image :
+   ##### Build docker image from scratch
+      1. Navigate to the root folder
+      2. Build the docker image
+      ``` bash
+      docker build --target k8s-watchdog -t k8s-watchdog:1.0.0 -t k8s-watchdog:latest -f ./docker/Dockerfile .
+      ```
+   ##### Use image published on DockerHub
+      1. Pull the image 
+      ``` bash
+      docker pull dserio83/k8s-watchdog
+      ```
+3. Create docker volumes:
+   1. Create a volume for store logs
+      ``` bash
+      docker volume create k8s_watchdog_vol
+      ```
+   2. Create a volume for config data.
+      ``` bash
+      docker volume create k8s_watchdog_config
+      ```
+4. Copy the kube config file into the volume created. It contains the credentials for the k8s API.
+Generally it is in /home/< user >/.kube/config folder.
 
-2. Build the Docker image:
-   1. Navigate to the root folder
-   2. Build the docker image
-
-       ``` bash
-       docker build --target k8s-watchdog -t k8s-watchdog:1.0.0 -t k8s-watchdog:latest -f ./docker/Dockerfile .
-       ```
-
-   3. Create a volume for store logs
-
-       ``` bash
-       docker volume create k8s_watchdog_vol
-       ```
-
-   4. Create a volume for config data.
-
-       ``` bash
-       docker volume create k8s_watchdog_config
-       ```
-
-   5. Copy the kube config file into the volume created. It contains the credentials for the k8s API.
-       Generally it is in /home/< user >/.kube/config folder.
-
-       ``` bash
-       docker container create --name copy-file -v k8s_watchdog_config:/config hello-world
-       docker cp <path config file yaml> copy-file:/config/config.yaml
-       docker rm copy-file
-       ```
-
-3. Create the stack and run it
+   ``` bash
+   docker container create --name copy-file -v k8s_watchdog_config:/config hello-world
+   docker cp <path config file yaml> copy-file:/config/config.yaml
+   docker rm copy-file
+   ```
+5. Create the stack and run it
 
     ``` bash
      docker-compose  -f ./docker/docker-compose.yaml -p k8s-watchdog-stack  up -d
@@ -168,7 +167,7 @@ Clone the repository:
       printenv | grep K8SW_* 
       ```
  
-2. Build the docker image:
+2. Setup docker image:
 
    1. Navigate to the root folder
    2. Build image
@@ -182,6 +181,12 @@ Clone the repository:
         ``` bash
         docker push ${K8SW_DOCKER_REGISTRY}/${K8SW_DOCKER_IMAGE} --all-tags
         ```
+
+      >[!INFO]  
+      Alternative you can use skip the *Build image* and *Push image* steps and use an deployed image published on DockerHub.<br>
+      Edit the .env file:
+      **K8SW_DOCKER_REGISTRY=dserio83** <br>
+      More info: https://hub.docker.com/r/dserio83/k8s-watchdog
 
 3. Kubernetes create objects
 

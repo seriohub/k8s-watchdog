@@ -1,0 +1,86 @@
+pipeline {
+    agent any
+
+    environment {
+        // Environment variables
+        GIT_SOURCE_CODE = "https://github.com/seriohub/k8s-watchdog" //Source code repository
+        DOCKER_HUB = "${env.DEFAULT_DOCKER_REGISTRY}" //Default docker registry (Global environment variable setting)
+        //DOCKER_PROJECT = "k8s-watchdog" //project name
+        DOCKER_PROJECT = "dserio83" //project name
+        DOCKERHUB_CREDENTIALS = credentials('DEFAULT_DOCKER_CREDENTIALS') //Credential stored in Jenkins Credential for logging in the HUB
+        TARGET="k8s-watchdog"
+        }
+    stages {
+        stage('Clone Git Repository') {
+            steps {
+                script {
+                    // Clone the GitHub repository
+                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: GIT_SOURCE_CODE]]])
+
+                    // Get the latest tag in the main branch
+                    def latestTag = sh(script: 'git describe --tags --abbrev=0', returnStdout: true).trim()
+
+                    // Remove the "v" prefix if it exists
+                    latestTag = latestTag.startsWith('v') ? latestTag.substring(1) : latestTag
+
+                    echo "Latest Tag: ${latestTag}"
+
+                    // Set the latest tag as an environment variable for later use
+                    GIT_TAG = latestTag
+
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                     // Path to your Dockerfile within the project directory
+                    def dockerfilePath = 'docker/Dockerfile'
+                    def dockerHubProject='$DOCKER_PROJECT/$TARGET'
+
+                    // Build the Docker image, specifying the Dockerfile path
+                    sh "docker build --target ${TARGET} -t ${dockerHubProject}:${GIT_TAG} -t ${dockerHubProject}:latest  -f ${dockerfilePath} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image to Registry') {
+            steps {
+                script {
+
+                    echo "Docker registry: ${DOCKER_HUB}"
+                    def pushTo=''
+                    if (DOCKER_HUB != null) {
+                        if (DOCKER_HUB != '' && !DOCKER_HUB.contains('null')) {
+                            pushTo='$DOCKER_HUB'
+                        }
+                    }
+
+                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin ${pushTo}'
+                    def dockerImageName='$DOCKER_PROJECT/$TARGET'
+
+                    if (DOCKER_HUB != null) {
+                        if (DOCKER_HUB != '' && !DOCKER_HUB.contains('null')) {
+                            dockerImageName='$DOCKER_HUB/$DOCKER_PROJECT/$TARGET'
+                        }
+                    }
+                    echo "Docker push to:- ${dockerImageName} -"
+                    sh "docker push ${dockerImageName}:${GIT_TAG}"
+                    sh "docker push ${dockerImageName}:latest"
+                    sh 'docker logout '
+
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline succeeded. Your image has been successfully pushed to the Docker Registry."
+        }
+        failure {
+            echo "Pipeline failed. There was an issue with the build or image push to the Docker Registry."
+        }
+    }
+}

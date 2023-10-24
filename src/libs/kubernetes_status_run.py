@@ -52,9 +52,12 @@ class KubernetesStatusRun:
         seconds_waiting = self.cycle_seconds + 1
         index = 0
         list_ns = []
+        # add wait
+        await asyncio.sleep(2)
 
         # LS 2023.10.21 add cluster name
-        cluster_name = self.k8s_stat.get_cluster_name()
+        cluster_name = self.k8s_stat.get_cluster_name_loaded()
+
         data_res = {self.k8s_config.CLUSTER_Name_key: cluster_name}
         await self.__put_in_queue(data_res)
 
@@ -109,7 +112,8 @@ class KubernetesStatusRun:
                             # replicaset
                             if self.k8s_config.RS_enable:
                                 replicaset_error = self.k8s_stat.get_replica_set(namespace=list_ns,
-                                                                                 extract_equal0=self.k8s_config.RS_pods0,
+                                                                                 extract_equal0=
+                                                                                 self.k8s_config.RS_pods0,
                                                                                  extract_not_equal=True)
                                 data_res[self.k8s_config.RS_key] = replicaset_error
                         case 5:
@@ -117,7 +121,8 @@ class KubernetesStatusRun:
                             # # daemon sets
                             if self.k8s_config.DS_enable:
                                 daemons_set_errors = self.k8s_stat.get_daemon_set(namespace=list_ns,
-                                                                                  extract_equal0=self.k8s_config.DS_pods0,
+                                                                                  extract_equal0=
+                                                                                  self.k8s_config.DS_pods0,
                                                                                   extract_not_equal=True)
                                 data_res[self.k8s_config.DS_key] = daemons_set_errors
                         case 6:

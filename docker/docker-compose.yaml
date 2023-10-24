@@ -2,7 +2,7 @@ version: '3.0'
 services:
   k8s-watchdog-stack:
     container_name: k8s-watchdog
-    image: k8s-watchdog:latest
+    image: dserio83/k8s-watchdog:latest
     restart: always
     network_mode: bridge
     command: ["python3", "main.py"]

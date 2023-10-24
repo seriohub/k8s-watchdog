@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2023-10-23
+ 
+**Implemented enhancements:**
+- add Jenkins pipeline for building the docker image and push it to the hub registry 
+
 ## [0.1.1] - 2023-10-21
  
 **Implemented enhancements:**

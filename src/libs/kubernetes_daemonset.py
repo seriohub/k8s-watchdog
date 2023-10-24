@@ -68,7 +68,7 @@ class KubernetesGetDms:
                         if add_st_sets:
                             self.print_helper.info_if(self.print_debug,
                                                       f"DaemonSet:{st.metadata.name} in {st.metadata.namespace}")
-                            details = {'cluster' : self.cluster_name,
+                            details = {'cluster': self.cluster_name,
                                        'namespace': st.metadata.namespace,
                                        'current_number_scheduled': st.status.current_number_scheduled,
                                        'desired_number_scheduled': st.status.desired_number_scheduled,

@@ -406,7 +406,7 @@ class KubernetesChecker:
             msg = msg + f"  - node status= {'ENABLE' if self.k8s_config.NODE_enable else '-'}\n"
             msg = msg + f"  - pods = {'ENABLE' if self.k8s_config.POD_enable else '-'}\n"
             msg = msg + (f"  - deployment= {'ENABLE' if self.k8s_config.DPL_enable else '-'} "
-                         f"{'P0' if self.k8s_config.DPL_enable and self.k8s_config.DPL_pods0 else '-'}\n")
+                         f"{'P0' if self.k8s_config.DPL_enable and self.k8s_config.DPL_pods0 else ''}\n")
             msg = msg + (f"  - stateful sets= {'ENABLE' if self.k8s_config.SS_enable else '-'} "
                          f"{'P0' if self.k8s_config.SS_enable  and self.k8s_config.SS_pods0 else ''}\n")
             msg = msg + (f"  - replicaset= {'ENABLE' if  self.k8s_config.RS_enable else '-'} "
@@ -415,10 +415,14 @@ class KubernetesChecker:
                          f"{'P0' if  self.k8s_config.DS_enable and  self.k8s_config.DS_pods0 else ''}\n")
             msg = msg + f"  - pvc= {'ENABLE' if self.k8s_config.PVC_enable else '-'}\n"
             msg = msg + f"  - pv= {'ENABLE' if self.k8s_config.PVC_enable else '-'}\n"
+            if self.alive_message_seconds >= 3600:
+                msg = msg + f"\nAlive message every {int(self.alive_message_seconds/3600)} hours"
+            else:
+                msg = msg + f"\nAlive message every {int(self.alive_message_seconds / 60)} minutes"
         else:
             msg = "Error init config class"
 
-        await self.send_to_telegram(f"k8s-checker is restarted\n{msg}")
+        await self.send_to_telegram(f"k8s-checker is restarted\n\n{msg}")
 
     @handle_exceptions_async_method
     async def run(self):
