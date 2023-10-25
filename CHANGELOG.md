@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2023-10-25
+
+**Implemented enhancements:**
+- add a new key in .env file to define the cluster name. When the script runs in the k8s, get cluster name does not work 
+- optimized source code in file main.py 
+- add version.py to store the version of script. It is aligned to the CHANGELOG.md latest version
+
 ## [0.1.2] - 2023-10-23
  
 **Implemented enhancements:**

@@ -3,11 +3,33 @@ import logging
 import sys
 from logging.handlers import RotatingFileHandler
 from utils.handle_error import handle_exceptions_method
+from utils.config import ConfigProgram
 
 
 class LLogger:
     def __init__(self):
         self.logger = None
+
+    @handle_exceptions_method
+    def init_logger_from_config(self, cl_config: ConfigProgram):
+        # logger section
+        logger_key = cl_config.logger_key()
+        logger_format_msg = cl_config.logger_msg_format()
+        logger_save_to_file = cl_config.logger_save_to_file()
+        logger_folder = cl_config.logger_folder()
+        logger_file_name = cl_config.logger_filename()
+        logger_file_size = cl_config.logger_max_filesize()
+        logger_backup_files = cl_config.logger_his_backups_files()
+        logger_level = cl_config.logger_level()
+
+        return self.init_logger(key=logger_key,
+                                output_format=logger_format_msg,
+                                save_to_file=logger_save_to_file,
+                                destination_folder=logger_folder,
+                                filename=logger_file_name,
+                                max_file_size=logger_file_size,
+                                historical_files=logger_backup_files,
+                                level=logger_level)
 
     @handle_exceptions_method
     def init_logger(self,

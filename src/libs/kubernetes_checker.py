@@ -422,7 +422,7 @@ class KubernetesChecker:
         else:
             msg = "Error init config class"
 
-        await self.send_to_telegram(f"k8s-checker is restarted\n\n{msg}")
+        await self.send_to_telegram(f"k8s-watchdog is restarted\n\n{msg}")
 
     @handle_exceptions_async_method
     async def run(self):
@@ -431,7 +431,6 @@ class KubernetesChecker:
         """
         try:
             self.print_helper.info("checker run")
-            # await self.send_to_telegram("k8s-checker is restarted")
             await self.send_active_configuration()
 
             while True:

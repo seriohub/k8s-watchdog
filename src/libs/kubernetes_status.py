@@ -22,6 +22,7 @@ class KubernetesStatus:
     def __init__(self,
                  kube_config_load_method=False,
                  kube_config_file=None,
+                 k8s_cluster_name=None,
                  debug_on=True,
                  logger=None):
 
@@ -60,7 +61,9 @@ class KubernetesStatus:
 
         self.api_instance = client.CoreV1Api()
         self.apps_instance = client.AppsV1Api()
+
         # Load cluster name
+        self.cluster_name_forced = k8s_cluster_name
         self.cluster_name = self.get_cluster_name()
 
         self.k8s_nodes = KubernetesGetNodes(debug_on,
@@ -121,6 +124,7 @@ class KubernetesStatus:
         try:
             cluster_name = None
             if self.k8s_in_cluster:
+                config.load_incluster_config()
                 current_context = config.list_kube_config_contexts()[1]
                 # The second element contains the current context
 
@@ -136,33 +140,29 @@ class KubernetesStatus:
         cluster_name = "Unknown"
         try:
             self.print_helper.info(f"get_cluster_name")
+            if self.cluster_name_forced is not None and len(self.cluster_name_forced) > 0 :
+                cluster_name = self.cluster_name_forced
+            else:
+                cluster_name = self.get_cluster_name_from_config_file()
 
-            # cluster_context = config.kube_config.list_kube_config_contexts()
-            # self.print_helper.info_if(self.print_debug,
-            #                           f"get_cluster_name:context {cluster_context}")
-            # cluster_name = cluster_context[1]['context']['cluster']
-            # self.print_helper.info_if(self.print_debug,
-            #                           f"get_cluster_name:cluster name  {cluster_name}")
-            # self.cluster_name = cluster_name
+                if cluster_name is None:
+                    cluster_name = self.get_cluster_name_from_in_cluster_config()
 
-            cluster_name = self.get_cluster_name_from_config_file()
+                if cluster_name is None:
+                    # Retrieve information about the current cluster
+                    cluster_info = self.api_instance.read_namespaced_config_map("kube-root-ca.crt",
+                                                                                "kube-system")
 
-            if cluster_name is None:
-                cluster_name = self.get_cluster_name_from_in_cluster_config()
-
-            if cluster_name is None:
-                # Retrieve information about the current cluster
-                cluster_info = self.api_instance.read_namespaced_config_map("kube-root-ca.crt",
-                                                                            "kube-system")
-
-                # Extract the cluster name from the ConfigMap data
-                cluster_name = cluster_info.data.get("cluster-name", "Unknown")
+                    # Extract the cluster name from the ConfigMap data
+                    cluster_name = cluster_info.data.get("cluster-name", "Unknown")
 
         except Exception as err:
             self.print_helper.error_and_exception(f"get_cluster_name", err)
             cluster_name = "Unknown"
         finally:
-            self.cluster_name = cluster_name
+            # LS 2023.10.24 Set to None if not found
+            if cluster_name == "Unknown":
+                cluster_name = None
             return cluster_name
 
     def get_cluster_name_loaded(self):

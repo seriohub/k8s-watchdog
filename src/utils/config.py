@@ -5,13 +5,13 @@ from utils.handle_error import handle_exceptions_static_method, handle_exception
 
 # class syntax
 class ConfigProgram:
-    def __init__(self, path_env=None):
+    def __init__(self, path_env=None, debug_on=True):
+        self.debug_on = debug_on
         res = load_dotenv(dotenv_path=path_env)
         print(f"INFO    [Env] Load env={res}")
 
-    @staticmethod
     @handle_exceptions_static_method
-    def load_key(key, default, print_out: bool = True, mask_value: bool = False):
+    def load_key(self, key, default, print_out: bool = True, mask_value: bool = False):
         value = os.getenv(key)
         if value is None or \
                 len(value) == 0:
@@ -21,9 +21,11 @@ class ConfigProgram:
             if mask_value and len(value) > 2:
                 index = int(len(value) / 2)
                 partial = '*' * index
-                print(f"INFO    [Env] load_key.key={key} value={value[:index]}{partial}")
+                if self.debug_on:
+                    print(f"INFO    [Env] load_key.key={key} value={value[:index]}{partial}")
             else:
-                print(f"INFO    [Env] load_key.key={key} value={value}")
+                if self.debug_on:
+                    print(f"INFO    [Env] load_key.key={key} value={value}")
 
         return value
 
@@ -133,6 +135,10 @@ class ConfigProgram:
         return self.load_key('PROCESS_KUBE_CONFIG', None)
 
     @handle_exceptions_method
+    def k8s_force_cluster_identification(self):
+        return self.load_key('PROCESS_CLUSTER_NAME', None)
+
+    @handle_exceptions_method
     def k8s_nodes_enable(self):
         res = self.load_key('K8S_NODE', 'True')
         return True if res.lower() == "true" or res.lower() == "1" else False
@@ -194,7 +200,8 @@ class ConfigProgram:
 
 
 class ConfigK8sProcess:
-    def __init__(self):
+    def __init__(self, cl_config: ConfigProgram = None):
+        self.CLUSTER_Name_forced = None
         self.CLUSTER_Name_key = 'cluster'
 
         self.POD_enable = True
@@ -224,3 +231,41 @@ class ConfigK8sProcess:
 
         self.NODE_enable = True
         self.NODE_key = 'nodelist'
+        if cl_config is not None:
+            self.__init_configuration_app__(cl_config)
+
+    def __print_configuration__(self):
+        """
+        Print setup class
+        """
+        if self.CLUSTER_Name_forced is not None:
+            print(f"INFO    [Process setup] k8s cluster name= {self.CLUSTER_Name_forced}")
+
+        print(f"INFO    [Process setup] k8s check node={self.NODE_enable}")
+        print(f"INFO    [Process setup] k8s check daemon sets={self.DS_enable}- pods0={self.DS_pods0}")
+        print(f"INFO    [Process setup] k8s check pods ={self.POD_enable}")
+        print(f"INFO    [Process setup] k8s check deployment={self.DPL_enable}- pods0={self.DPL_pods0}")
+        print(f"INFO    [Process setup] k8s check stateful sets={self.SS_enable}- pods0={self.SS_pods0}")
+        print(f"INFO    [Process setup] k8s check replicaset={self.RS_enable}- pods0={self.RS_pods0}")
+        print(f"INFO    [Process setup] k8s check pvc={self.PVC_enable}")
+        print(f"INFO    [Process setup] k8s check pv={self.PVC_enable}")
+
+    def __init_configuration_app__(self, cl_config: ConfigProgram):
+        """
+        Init configuration class reading .env file
+        """
+        self.PVC_enable = cl_config.k8s_pvc_enable()
+        self.PV_enable = cl_config.k8s_pv_enable()
+        self.POD_enable = cl_config.k8s_pods_enable()
+        self.NODE_enable = cl_config.k8s_nodes_enable()
+        self.DS_enable = cl_config.k8s_daemons_sets_enable()
+        self.DPL_enable = cl_config.k8s_deployment_enable()
+        self.SS_enable = cl_config.k8s_stateful_sets_enable()
+        self.RS_enable = cl_config.k8s_replica_sets_enable()
+        self.DS_pods0 = cl_config.k8s_daemons_sets_pods0()
+        self.DPL_pods0 = cl_config.k8s_deployment_pods0()
+        self.SS_pods0 = cl_config.k8s_stateful_sets_pods0()
+        self.RS_pods0 = cl_config.k8s_replica_sets_pods0()
+        self.CLUSTER_Name_forced = cl_config.k8s_force_cluster_identification()
+
+        self.__print_configuration__()

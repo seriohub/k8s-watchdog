@@ -27,8 +27,13 @@ class KubernetesStatusRun:
                                    f"__init__")
 
         self.queue = queue
+        forced_cname = None
+        if k8s_key_config is not None:
+            forced_cname = k8s_key_config.CLUSTER_Name_forced
+
         self.k8s_stat = KubernetesStatus(kube_load_method,
                                          kube_config_file,
+                                         forced_cname,
                                          debug_on,
                                          logger)
 
