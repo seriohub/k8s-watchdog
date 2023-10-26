@@ -73,13 +73,39 @@ pipeline {
             }
         }
     }
-
     post {
-        success {
-            echo "Pipeline succeeded. Your image has been successfully pushed to the Docker Registry."
-        }
-        failure {
-            echo "Pipeline failed. There was an issue with the build or image push to the Docker Registry."
+        always {
+            script {
+
+                def pipelineName = currentBuild.fullProjectName
+                def message
+
+                if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
+                    message = "Jenkins Pipeline ${pipelineName} : Your image (version ${latestTag}) has been successfully
+                     pushed to the Docker Registry"
+                } else {
+                    message = "Jenkins Pipeline ${pipelineName}: Build failed"
+                }
+
+                def url = "https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendMessage"
+                def payload = [
+                    chat_id: "${env.TELEGRAM_CHAT_ID}",
+                    text: message
+                ]
+
+                def response = httpRequest(
+                    url: url,
+                    httpMode: 'POST',
+                    contentType: 'APPLICATION_JSON',
+                    requestBody: groovy.json.JsonOutput.toJson(payload)
+                )
+
+                if (response.status == 200) {
+                    echo "Telegram message sent successfully"
+                } else {
+                    error "Failed to send Telegram message. Status code: ${response.status}"
+                }
+            }
         }
     }
 }
