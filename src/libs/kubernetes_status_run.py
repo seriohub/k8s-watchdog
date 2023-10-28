@@ -92,8 +92,7 @@ class KubernetesStatusRun:
 
                             if self.k8s_config.POD_enable:
                                 # pod
-                                pods_error = self.k8s_stat.get_pods(namespace=list_ns,
-                                                                    phase_equal=False)
+                                pods_error = self.k8s_stat.get_pods(namespace=list_ns, phase_equal=False)
                                 data_res[self.k8s_config.POD_key] = pods_error
 
                         case 2:

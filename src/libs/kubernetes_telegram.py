@@ -80,8 +80,8 @@ class KubernetesTelegram:
 
                     response = requests.post(api_url, json={'chat_id': self.telegram_chat_ID,
                                                             'text': message})
-
-                    self.print_helper.info(f"send_to_telegram.response {response.text}")
+                    # LS 2023.10.28 truncate the response
+                    self.print_helper.info(f"send_to_telegram.response {response.text[1:10]}")
 
                 except Exception as e:
                     # self.print_helper.error(f"send_to_telegram. error {e}")

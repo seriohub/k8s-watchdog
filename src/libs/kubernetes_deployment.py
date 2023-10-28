@@ -84,7 +84,6 @@ class KubernetesGetDeployment:
                                 self.print_helper.info(f"Deployment.ready replicas : "
                                                        f"{st.status.ready_replicas}")
 
-                            print(details)
                             dpl_sets[st.metadata.name] = details
 
             self.print_helper.info(f"{len(dpl_sets)}/{total} deployment found "

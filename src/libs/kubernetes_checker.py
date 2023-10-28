@@ -116,17 +116,17 @@ class KubernetesChecker:
                         # msg = f'{title} detail\n'
                         msg += f"----------\n"
                         msg += f"Name= {key_dict}\n"
-                        print(f"current_node:{current_node}")
+                        # print(f"current_node:{current_node}")
                         for key, value in current_node.items():
                             key_value = True
                             if (enable_keys is None or
                                     key in enable_keys):
                                 if isinstance(value, dict):
                                     key_value = False
-                                    msg += f"{key.title()}:\n"
+                                    msg += f"{key}:\n"
                                     for key_n, value_n in value.items():
                                         if value_n is not None and len(value_n) > 0:
-                                            msg += f"   {key_n.title()}= {value_n}\n"
+                                            msg += f"   {key_n}= {value_n}\n"
                             else:
                                 key_value = False
 
@@ -261,6 +261,9 @@ class KubernetesChecker:
         # 'own_controller'
         # 'own_kind'
         # 'own_name'
+
+        # LS 2023.10.28 add key condition_x
+
         await self.__process_key__(data=pods_status,
                                    old_data=self.old_pods,
                                    enable_keys=['cluster',
@@ -269,7 +272,11 @@ class KubernetesChecker:
                                                 'phase',
                                                 'own_controller',
                                                 'own_kind',
-                                                'own_name'],
+                                                'own_name',
+                                                'cs_0',
+                                                'cs_1',
+                                                'cs_2',
+                                                'cs_3'],
                                    title='Pod')
         self.old_pods = pods_status
 

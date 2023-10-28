@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+
+## [0.1.4] - 2023-10-28
+**Implemented enhancements:**
+- The response from http request (telegram api call)  is limited to 10 characters
+- In pod message details add the container status
+
+**Fixed bugs:**
+- The pod in "Succeeded" state is not considered a critical state  
+
 ## [0.1.3] - 2023-10-25
 
 **Implemented enhancements:**

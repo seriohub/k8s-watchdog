@@ -178,13 +178,12 @@ class KubernetesStatus:
     def get_pods(self,
                  namespace,
                  label_selector: str = '',
-                 phase: str = 'Running',
+                 phase=None,
                  phase_equal=False):
 
-        return self.k8s_pods.get_pods(namespace,
-                                      label_selector,
-                                      phase,
-                                      phase_equal)
+        if phase is None:
+            phase = {}
+        return self.k8s_pods.get_pods(namespace, label_selector, phase, phase_equal)
 
     def get_stateful_set(self, namespace,
                          extract_not_equal=False,

@@ -35,20 +35,26 @@ class KubernetesGetPods:
     def get_pods(self,
                  namespace,
                  label_selector: str = '',
-                 phase: str = 'Running',
+                 phase=None,
                  phase_equal=False):
         """
          Obtain the list of k8s pods created
         :param namespace:
         :param label_selector:
-        :param phase:
+        :param phase: dict of phase to be controlled
         :param phase_equal:
         :return:  List of pods
         """
+        namespace = ['matomo']
+        # LS 2023.10.28 update the parameter from str to object
+        if phase is None or len(phase) == 0:
+            phase = {"Running", "Succeeded"}
+
         try:
             self.print_helper.info(f"get_pods - found pods where phase is  {phase}  and equal {phase_equal} ")
             total_nm = 0
             pods = {}
+
             if namespace is not None:
                 nm_list = namespace
             else:
@@ -75,21 +81,17 @@ class KubernetesGetPods:
 
                 for pod in nm_list.items:
                     condition = {}
-
-                    # if pod.metadata.name=='<specific key to print>':
-                    #     print("<<<<>>>>")
-                    #     print(pod)
-                    #     print("<<<<>>>>")
-
                     self.print_helper.info_if(self.print_debug,
                                               f"pod {pod.metadata.name} is in phase {phase}")
                     add_phase = False
                     if len(phase) > 0:
                         if phase_equal:
-                            if pod.status.phase == phase:
+                            # if pod.status.phase == phase:
+                            if pod.status.phase in phase:
                                 add_phase = True
                         else:
-                            if pod.status.phase != phase:
+                            # if pod.status.phase != phase:
+                            if not (pod.status.phase in phase):
                                 add_phase = True
                     else:
                         add_phase = True
@@ -97,18 +99,48 @@ class KubernetesGetPods:
                     condition['namespace'] = pod.metadata.namespace
                     condition['phase'] = pod.status.phase
 
+                    n_condition = 0
                     for detail in pod.status.conditions:
-                        condition[detail.type] = detail.status
+                        condition[f'condition_{n_condition}'] = {'message': detail.message,
+                                                                 'reason': detail.reason,
+                                                                 'status': detail.status,
+                                                                 'type': detail.type}
+                        n_condition += 1
                         self.print_helper.info_if(self.print_debug,
                                                   f"[{pod.metadata.name}] "
-                                                  f"reason:{detail.type} "
+                                                  f"reason:{detail.reason} "
+                                                  f"type:{detail.type} "
+                                                  f"message:{detail.message} "
                                                   f"status: {detail.status}")
 
                     if pod.status.container_statuses:
-                        condition['cs_restart_count'] = pod.status.container_statuses[0].restart_count
-                        condition['cs_ready'] = pod.status.container_statuses[0].ready
-                        condition['cs_started'] = pod.status.container_statuses[0].started
-                        condition['cs_state'] = pod.status.container_statuses[0].state
+                        # LS  2023.10.18 Comment and iterate each child nodes
+                        # condition['cs_restart_count'] = pod.status.container_statuses[0].restart_count
+                        # condition['cs_ready'] = pod.status.container_statuses[0].ready
+                        # condition['cs_started'] = pod.status.container_statuses[0].started
+                        # condition['cs_state'] = pod.status.container_statuses[0].state
+
+                        container_statuses = 0
+                        for detail in pod.status.container_statuses:
+                            state = "Unknown"
+                            if detail.state.waiting is not None:
+                                state = "Waiting"
+                            elif detail.state.terminated is not None:
+                                state = detail.state.terminated.reason
+                            elif detail.state.running is not None:
+                                state = "Running"
+
+                            condition[f'cs_{container_statuses}'] = {'restart': detail.restart_count,
+                                                                     'ready': detail.ready,
+                                                                     'started': detail.started,
+                                                                     'state': state}
+
+                            self.print_helper.info_if(self.print_debug,
+                                                      f"[{pod.metadata.name}] "
+                                                      f"restart:{detail.restart_count} "
+                                                      f"ready:{detail.ready} "
+                                                      f"started:{detail.started} "
+                                                      f"state: {state}")
 
                     if pod.metadata.owner_references:
                         condition['own_controller'] = pod.metadata.owner_references[0].controller
