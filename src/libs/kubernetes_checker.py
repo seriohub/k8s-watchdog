@@ -108,10 +108,12 @@ class KubernetesChecker:
                     # if key exits in previous data dict
                     if old_data:
                         if key_dict in old_data.keys():
-                            if old_data[key_dict] == current_node:
-                                self.print_helper.info_if(self.print_debug, f"{title} old data for {key_dict}  "
-                                                                            f"is equal to new data. No message")
-                                process = False
+                            # LS 2023.10.29 update
+                            # if old_data[key_dict] == current_node:
+                            self.print_helper.info_if(self.print_debug, f"{title} old data for {key_dict}  "
+                                                                        f"is equal to new data. No message")
+                            process = False
+
                     if process:
                         # msg = f'{title} detail\n'
                         msg += f"----------\n"
@@ -121,12 +123,7 @@ class KubernetesChecker:
                             key_value = True
                             if (enable_keys is None or
                                     key in enable_keys):
-                                if isinstance(value, dict):
-                                    key_value = False
-                                    msg += f"{key}:\n"
-                                    for key_n, value_n in value.items():
-                                        if value_n is not None and len(value_n) > 0:
-                                            msg += f"   {key_n}= {value_n}\n"
+                                key_value, msg = await self.__concatenate__status__(key, key_value, msg, value)
                             else:
                                 key_value = False
 
@@ -169,6 +166,23 @@ class KubernetesChecker:
 
         except Exception as err:
             self.print_helper.error_and_exception(f"__process_key__{title}", err)
+
+    async def __concatenate__status__(self, key, key_value, msg, value):
+
+        if isinstance(value, dict):
+            key_value = False
+            msg += f"{key}:\n"
+            for key_n, value_n in value.items():
+                if value_n is not None and len(value_n) > 0:
+                    if not isinstance(value_n, dict):
+                        msg += f"   {key_n}= {value_n}\n"
+                    else:
+                        key_value, msg = await self.__concatenate__status__(key_n,
+                                                                            key_value,
+                                                                            msg,
+                                                                            value_n)
+
+        return key_value, msg
 
     @handle_exceptions_async_method
     async def __unpack_data__(self, data):
@@ -263,16 +277,16 @@ class KubernetesChecker:
         # 'own_name'
 
         # LS 2023.10.28 add key condition_x
-
+        # LS 2023.10.28 remove 'phase',
         await self.__process_key__(data=pods_status,
                                    old_data=self.old_pods,
                                    enable_keys=['cluster',
                                                 'namespace',
                                                 'started',
-                                                'phase',
                                                 'own_controller',
                                                 'own_kind',
                                                 'own_name',
+                                                'conditions',
                                                 'cs_0',
                                                 'cs_1',
                                                 'cs_2',
