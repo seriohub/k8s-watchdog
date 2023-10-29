@@ -152,7 +152,7 @@ class KubernetesGetPods:
                                 state = {"Running": 'True'}
                                 state_ckc = "Running"
 
-                            condition[f'cs_{container_statuses}'] = {'image': detail.image,
+                            condition[f'cs_{container_statuses}'] = {'image': str(detail.image).rsplit('/', 1)[-1],
                                                                      'restart': f"{detail.restart_count}",
                                                                      'ready': f"{detail.ready}",
                                                                      'started': f"{detail.started}",

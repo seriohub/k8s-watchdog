@@ -140,7 +140,7 @@ class KubernetesStatus:
         cluster_name = "Unknown"
         try:
             self.print_helper.info(f"get_cluster_name")
-            if self.cluster_name_forced is not None and len(self.cluster_name_forced) > 0 :
+            if self.cluster_name_forced is not None and len(self.cluster_name_forced) > 0:
                 cluster_name = self.cluster_name_forced
             else:
                 cluster_name = self.get_cluster_name_from_config_file()

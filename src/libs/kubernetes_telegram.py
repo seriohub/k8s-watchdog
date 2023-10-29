@@ -72,6 +72,7 @@ class KubernetesTelegram:
     @handle_exceptions_async_method
     async def send_to_telegram(self, message):
         self.print_helper.info(f"send_to_telegram")
+        print(f"{message}")
         await self.__can_send_message__()
         if self.telegram_enable:
             if len(self.telegram_api_token) > 0 and len(self.telegram_chat_ID) > 0:
@@ -80,6 +81,7 @@ class KubernetesTelegram:
 
                     response = requests.post(api_url, json={'chat_id': self.telegram_chat_ID,
                                                             'text': message})
+                    # 'parse_mode': 'MarkdownV2'
                     # LS 2023.10.28 truncate the response
                     self.print_helper.info(f"send_to_telegram.response {response.text[1:10]}")
 

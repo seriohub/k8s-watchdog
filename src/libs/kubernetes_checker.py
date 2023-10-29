@@ -117,7 +117,8 @@ class KubernetesChecker:
                     if process:
                         # msg = f'{title} detail\n'
                         msg += f"----------\n"
-                        msg += f"Name= {key_dict}\n"
+                        # msg += f"Name= {key_dict}\n"
+                        msg += f"{key_dict}\n"
                         # print(f"current_node:{current_node}")
                         for key, value in current_node.items():
                             key_value = True
@@ -424,18 +425,18 @@ class KubernetesChecker:
         self.print_helper.info_if(self.print_debug, f"send_active_configuration")
         msg = f'Configuration setup:\n'
         if self.k8s_config is not None:
-            msg = msg + f"  - node status= {'ENABLE' if self.k8s_config.NODE_enable else '-'}\n"
-            msg = msg + f"  - pods = {'ENABLE' if self.k8s_config.POD_enable else '-'}\n"
-            msg = msg + (f"  - deployment= {'ENABLE' if self.k8s_config.DPL_enable else '-'} "
+            msg = msg + f"  . node status= {'ENABLE' if self.k8s_config.NODE_enable else '.'}\n"
+            msg = msg + f"  . pods = {'ENABLE' if self.k8s_config.POD_enable else '.'}\n"
+            msg = msg + (f"  . deployment= {'ENABLE' if self.k8s_config.DPL_enable else '.'} "
                          f"{'P0' if self.k8s_config.DPL_enable and self.k8s_config.DPL_pods0 else ''}\n")
-            msg = msg + (f"  - stateful sets= {'ENABLE' if self.k8s_config.SS_enable else '-'} "
+            msg = msg + (f"  . stateful sets= {'ENABLE' if self.k8s_config.SS_enable else '.'} "
                          f"{'P0' if self.k8s_config.SS_enable  and self.k8s_config.SS_pods0 else ''}\n")
-            msg = msg + (f"  - replicaset= {'ENABLE' if  self.k8s_config.RS_enable else '-'} "
+            msg = msg + (f"  . replicaset= {'ENABLE' if  self.k8s_config.RS_enable else '.'} "
                          f"{'P0' if self.k8s_config.RS_enable and self.k8s_config.RS_pods0 else ''}\n")
-            msg = msg + (f"  - daemon sets= {'ENABLE' if self.k8s_config.DS_enable else '-'}"
+            msg = msg + (f"  . daemon sets= {'ENABLE' if self.k8s_config.DS_enable else '-'}"
                          f"{'P0' if  self.k8s_config.DS_enable and  self.k8s_config.DS_pods0 else ''}\n")
-            msg = msg + f"  - pvc= {'ENABLE' if self.k8s_config.PVC_enable else '-'}\n"
-            msg = msg + f"  - pv= {'ENABLE' if self.k8s_config.PVC_enable else '-'}\n"
+            msg = msg + f"  . pvc= {'ENABLE' if self.k8s_config.PVC_enable else '.'}\n"
+            msg = msg + f"  . pv= {'ENABLE' if self.k8s_config.PVC_enable else '.'}\n"
             if self.alive_message_seconds >= 3600:
                 msg = msg + f"\nAlive message every {int(self.alive_message_seconds/3600)} hours"
             else:
