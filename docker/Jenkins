@@ -9,6 +9,7 @@ pipeline {
         evDocker_HUB_Credentials = credentials('DEFAULT_DOCKER_CREDENTIALS') //Credential stored in Jenkins Credential for logging in the HUB
         evTarget="k8s-watchdog"
         evLatestTag = ""
+        evCommitChangeset = ""
         }
     stages {
         stage('Clone Git Repository') {
@@ -27,6 +28,9 @@ pipeline {
 
                     // Set the latest tag as an environment variable for later use
                     GIT_TAG = evLatestTag
+
+                    //Get commit changes
+                    evCommitChangeset = sh(returnStdout: true, script: "git log -1 --pretty='%s'").trim()
 
                 }
             }
@@ -82,7 +86,7 @@ pipeline {
                 def message
 
                 if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
-                    message = "Jenkins Pipeline ${pipelineName} : Your image version ${evLatestTag} has been successfully pushed to the Docker Registry"
+                    message = "Jenkins Pipeline ${pipelineName} : Your image version ${evLatestTag} has been successfully pushed to the Docker Registry.\nCommit changes:\n ${evCommitChangeset}"
                 } else {
                     message = "Jenkins Pipeline ${pipelineName}: Build failed"
                 }
