@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2023-10-29
+**Implemented enhancements:**
+- In the alive message added the name of the cluster and the time without warning/alarm
+- In pods filters, added the status "ContainerCreating" to the OK
+
 
 ## [0.1.4] - 2023-10-28
 **Implemented enhancements:**

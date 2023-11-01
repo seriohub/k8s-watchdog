@@ -50,7 +50,7 @@ class KubernetesGetPods:
 
         # LS 2023.10.28 update the parameter from str to object
         if phase is None or len(phase) == 0:
-            phase = {"Running", "Completed"}
+            phase = {"Running", "Completed", "ContainerCreating"}
 
         try:
             self.print_helper.info(f"get_pods - found pods where phase is  {phase}  and equal {phase_equal} ")

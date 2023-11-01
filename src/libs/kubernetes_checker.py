@@ -47,6 +47,9 @@ class KubernetesChecker:
         self.alive_message_seconds = telegram_alive_message_hours * 3600
         self.last_send = calendar.timegm(datetime.today().timetuple())
 
+        self.cluster_name = ""
+        self.force_alive_message = True
+
     @handle_exceptions_async_method
     async def __put_in_queue__(self,
                                queue,
@@ -220,9 +223,16 @@ class KubernetesChecker:
             # telegram alive message
             if self.alive_message_seconds > 0:
                 diff = calendar.timegm(datetime.today().timetuple()) - self.last_send
-                if diff > self.alive_message_seconds:
+
+                if diff > self.alive_message_seconds or self.force_alive_message:
                     self.print_helper.info(f"__unpack_data.send alive message")
-                    await self.send_to_telegram("The system is running. No warning/errors on k8s")
+                    await self.send_to_telegram(f"Cluster: {self.cluster_name}"
+                                                f"\nk8s-watchdog is running."
+                                                f"\nThis is an alive message"
+                                                f"\nNo warning/errors were triggered in the last "
+                                                f"{int(self.alive_message_seconds/3600)} "
+                                                f"hours ")
+                    self.force_alive_message= False
 
         except Exception as err:
             self.print_helper.error_and_exception(f"__unpack_data", err)
@@ -258,6 +268,8 @@ class KubernetesChecker:
         if nodes_name is not None:
             self.print_helper.info_if(self.print_debug, f"Flush last message")
             await self.send_to_telegram(f"Cluster name= {nodes_name}")
+
+        self.cluster_name = nodes_name
 
     @handle_exceptions_async_method
     async def __process_pods__(self, data):
