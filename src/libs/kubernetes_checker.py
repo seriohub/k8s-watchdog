@@ -48,7 +48,7 @@ class KubernetesChecker:
         self.last_send = calendar.timegm(datetime.today().timetuple())
 
         self.cluster_name = ""
-        self.force_alive_message = True
+        self.force_alive_message = False
 
     @handle_exceptions_async_method
     async def __put_in_queue__(self,
@@ -232,7 +232,7 @@ class KubernetesChecker:
                                                 f"\nNo warning/errors were triggered in the last "
                                                 f"{int(self.alive_message_seconds/3600)} "
                                                 f"hours ")
-                    self.force_alive_message= False
+                    self.force_alive_message = False
 
         except Exception as err:
             self.print_helper.error_and_exception(f"__unpack_data", err)

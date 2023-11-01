@@ -140,6 +140,10 @@ class KubernetesGetPods:
                                 state = {"Waiting": 'True',
                                          'reason': detail.state.waiting.reason
                                          }
+                                # LS 2023.11.01 15:30 add control is in a phase force the state check to new value
+                                if detail.state.waiting.reason in phase:
+                                    state_ckc = detail.state.waiting.reason
+
                             elif detail.state.terminated is not None:
                                 state_ckc = detail.state.terminated.reason
                                 # 'message': detail.state.terminated.message,
