@@ -15,9 +15,9 @@ class KubernetesChecker:
                  debug_on=True,
                  logger=None,
                  queue=None,
-                 telegram_queue=None,
-                 telegram_max_msg_len=2000,
-                 telegram_alive_message_hours=0,
+                 dispatcher_queue=None,
+                 dispatcher_max_msg_len=2000,
+                 dispatcher_alive_message_hours=24,
                  k8s_key_config: ConfigK8sProcess = None):
 
         self.print_helper = PrintHelper('k8s_checker', logger)
@@ -28,8 +28,8 @@ class KubernetesChecker:
 
         self.queue = queue
 
-        self.telegram_max_msg_len = telegram_max_msg_len
-        self.telegram_queue = telegram_queue
+        self.dispatcher_max_msg_len = dispatcher_max_msg_len
+        self.dispatcher_queue = dispatcher_queue
 
         self.k8s_config = ConfigK8sProcess()
         if k8s_key_config is not None:
@@ -44,11 +44,14 @@ class KubernetesChecker:
         self.old_pv = {}
         self.old_deployment = {}
 
-        self.alive_message_seconds = telegram_alive_message_hours * 3600
+        self.alive_message_seconds = dispatcher_alive_message_hours * 3600
         self.last_send = calendar.timegm(datetime.today().timetuple())
 
         self.cluster_name = ""
         self.force_alive_message = False
+
+        # LS 2023.11.40 add variable for sending isolate message configuration
+        self.send_config = False
 
     @handle_exceptions_async_method
     async def __put_in_queue__(self,
@@ -64,14 +67,14 @@ class KubernetesChecker:
         await queue.put(obj)
 
     @handle_exceptions_async_method
-    async def send_to_telegram(self, message):
+    async def send_to_dispatcher(self, message):
         """
-        Send message to Telegram engine
+        Send message to dispatcher engine
         :param message:
         """
-        self.print_helper.info(f"send_to_telegram")
+        self.print_helper.info(f"send_to_dispatcher")
         self.last_send = calendar.timegm(datetime.today().timetuple())
-        await self.__put_in_queue__(self.telegram_queue,
+        await self.__put_in_queue__(self.dispatcher_queue,
                                     message)
 
     @handle_exceptions_async_method
@@ -139,10 +142,10 @@ class KubernetesChecker:
                         # if resolved:
                         #     msg += f"Resolved= True\n"
 
-                        if len(msg) >= self.telegram_max_msg_len:
+                        if len(msg) >= self.dispatcher_max_msg_len:
                             self.print_helper.info_if(self.print_debug,
                                                       f"Max message length reached, force send message")
-                            await self.send_to_telegram(msg)
+                            await self.send_to_dispatcher(msg)
                             # Reset msg len
                             msg = base_title
 
@@ -153,7 +156,7 @@ class KubernetesChecker:
                 if len(msg) > len(base_title):
                     self.print_helper.info_if(self.print_debug, f"Flush last message")
 
-                    await self.send_to_telegram(msg)
+                    await self.send_to_dispatcher(msg)
 
                 if (not resolved
                         and data is not None
@@ -220,18 +223,18 @@ class KubernetesChecker:
             else:
                 self.print_helper.info(f"__unpack_data.the message is not a type of dict")
 
-            # telegram alive message
+            # dispatcher alive message
             if self.alive_message_seconds > 0:
                 diff = calendar.timegm(datetime.today().timetuple()) - self.last_send
 
                 if diff > self.alive_message_seconds or self.force_alive_message:
                     self.print_helper.info(f"__unpack_data.send alive message")
-                    await self.send_to_telegram(f"Cluster: {self.cluster_name}"
-                                                f"\nk8s-watchdog is running."
-                                                f"\nThis is an alive message"
-                                                f"\nNo warning/errors were triggered in the last "
-                                                f"{int(self.alive_message_seconds/3600)} "
-                                                f"hours ")
+                    await self.send_to_dispatcher(f"Cluster: {self.cluster_name}"
+                                                  f"\nk8s-watchdog is running."
+                                                  f"\nThis is an alive message"
+                                                  f"\nNo warning/errors were triggered in the last "
+                                                  f"{int(self.alive_message_seconds / 3600)} "
+                                                  f"hours ")
                     self.force_alive_message = False
 
         except Exception as err:
@@ -267,7 +270,11 @@ class KubernetesChecker:
         self.print_helper.info(f"cluster name {nodes_name}")
         if nodes_name is not None:
             self.print_helper.info_if(self.print_debug, f"Flush last message")
-            await self.send_to_telegram(f"Cluster name= {nodes_name}")
+            # LS 2023.11.04 Send configuration separately
+            if self.send_config:
+                await self.send_to_dispatcher(f"Cluster name= {nodes_name}")
+            else:
+                await self.send_active_configuration(f"Cluster name= {nodes_name}")
 
         self.cluster_name = nodes_name
 
@@ -430,11 +437,16 @@ class KubernetesChecker:
         self.old_pvc = pvc_status
 
     @handle_exceptions_async_method
-    async def send_active_configuration(self):
+    async def send_active_configuration(self, sub_title=None):
         """
         Send a message to Telegram engine of the active setup
         """
+        title = "k8s-watchdog is restarted"
+        if sub_title is not None and len(sub_title) > 0:
+            title = f"{title}\n{sub_title}"
+
         self.print_helper.info_if(self.print_debug, f"send_active_configuration")
+
         msg = f'Configuration setup:\n'
         if self.k8s_config is not None:
             msg = msg + f"  . node status= {'ENABLE' if self.k8s_config.NODE_enable else '.'}\n"
@@ -442,21 +454,22 @@ class KubernetesChecker:
             msg = msg + (f"  . deployment= {'ENABLE' if self.k8s_config.DPL_enable else '.'} "
                          f"{'P0' if self.k8s_config.DPL_enable and self.k8s_config.DPL_pods0 else ''}\n")
             msg = msg + (f"  . stateful sets= {'ENABLE' if self.k8s_config.SS_enable else '.'} "
-                         f"{'P0' if self.k8s_config.SS_enable  and self.k8s_config.SS_pods0 else ''}\n")
-            msg = msg + (f"  . replicaset= {'ENABLE' if  self.k8s_config.RS_enable else '.'} "
+                         f"{'P0' if self.k8s_config.SS_enable and self.k8s_config.SS_pods0 else ''}\n")
+            msg = msg + (f"  . replicaset= {'ENABLE' if self.k8s_config.RS_enable else '.'} "
                          f"{'P0' if self.k8s_config.RS_enable and self.k8s_config.RS_pods0 else ''}\n")
             msg = msg + (f"  . daemon sets= {'ENABLE' if self.k8s_config.DS_enable else '-'}"
-                         f"{'P0' if  self.k8s_config.DS_enable and  self.k8s_config.DS_pods0 else ''}\n")
+                         f"{'P0' if self.k8s_config.DS_enable and self.k8s_config.DS_pods0 else ''}\n")
             msg = msg + f"  . pvc= {'ENABLE' if self.k8s_config.PVC_enable else '.'}\n"
             msg = msg + f"  . pv= {'ENABLE' if self.k8s_config.PVC_enable else '.'}\n"
             if self.alive_message_seconds >= 3600:
-                msg = msg + f"\nAlive message every {int(self.alive_message_seconds/3600)} hours"
+                msg = msg + f"\nAlive message every {int(self.alive_message_seconds / 3600)} hours"
             else:
                 msg = msg + f"\nAlive message every {int(self.alive_message_seconds / 60)} minutes"
         else:
             msg = "Error init config class"
 
-        await self.send_to_telegram(f"k8s-watchdog is restarted\n\n{msg}")
+        msg = f"{title}\n\n{msg}"
+        await self.send_to_dispatcher(msg)
 
     @handle_exceptions_async_method
     async def run(self):
@@ -465,7 +478,8 @@ class KubernetesChecker:
         """
         try:
             self.print_helper.info("checker run")
-            await self.send_active_configuration()
+            if self.send_config:
+                await self.send_active_configuration()
 
             while True:
                 # get a unit of work
