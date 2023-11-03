@@ -98,7 +98,7 @@ class ConfigProgram:
     @handle_exceptions_method
     def telegram_max_msg_len(self):
         res = self.load_key('TELEGRAM_MAX_MSG_LEN',
-                            '2000')
+                            '3000')
 
         if len(res) == 0:
             res = '2000'
@@ -114,8 +114,8 @@ class ConfigProgram:
         return int(res)
 
     @handle_exceptions_method
-    def telegram_alive_message_hours(self):
-        res = self.load_key('TELEGRAM_ALIVE_MSG_HOURS',
+    def notification_alive_message_hours(self):
+        res = self.load_key('NOTIFICATION_ALIVE_MSG_HOURS',
                             '24')
         n_hours = int(res)
         if n_hours < 0:
@@ -143,7 +143,7 @@ class ConfigProgram:
 
     @handle_exceptions_method
     def email_recipient(self):
-        return self.load_key('EMAIL_RECIPIENT', '')
+        return self.load_key('EMAIL_RECIPIENTS', '')
 
     @handle_exceptions_method
     def email_sender_password(self):
@@ -259,6 +259,12 @@ class ConfigK8sProcess:
 
         self.NODE_enable = True
         self.NODE_key = 'nodelist'
+
+        # LS 2023.11.03 key for sending a unique message
+        self.disp_MSG_key_unique = True  # Fixed True
+        self.disp_MSG_key_start = 'msg_key_start'
+        self.disp_MSG_key_end = 'msg_key_end'
+
         if cl_config is not None:
             self.__init_configuration_app__(cl_config)
 
@@ -277,6 +283,8 @@ class ConfigK8sProcess:
         print(f"INFO    [Process setup] k8s check replicaset={self.RS_enable}- pods0={self.RS_pods0}")
         print(f"INFO    [Process setup] k8s check pvc={self.PVC_enable}")
         print(f"INFO    [Process setup] k8s check pv={self.PVC_enable}")
+
+        print(f"INFO    [Process setup] k8s send summary message={self.disp_MSG_key_unique}")
 
     def __init_configuration_app__(self, cl_config: ConfigProgram):
         """
@@ -301,7 +309,7 @@ class ConfigK8sProcess:
 
 class ConfigDispatcher:
     def __init__(self, cl_config: ConfigProgram = None):
-        self.max_msg_len = 5000
+        self.max_msg_len = 50000
         self.alive_message = 24
 
         self.telegram_enable = False
@@ -346,7 +354,7 @@ class ConfigDispatcher:
 
             print(f"INFO    [Dispatcher setup] telegram-max message length={self.telegram_max_msg_len}")
             print(f"INFO    [Dispatcher setup] telegram-rate limit minute={self.telegram_rate_limit}")
-            print(f"INFO    [Dispatcher setup] telegram-alive message every={self.telegram_alive_message} hour")
+            print(f"INFO    [Dispatcher setup] Notification-alive message every={self.alive_message} hour")
 
         print(f"INFO    [Dispatcher setup] email={self.email_enable}")
         if self.email_enable:
@@ -367,7 +375,6 @@ class ConfigDispatcher:
         self.telegram_token = cl_config.telegram_token()
         self.telegram_max_msg_len = cl_config.telegram_max_msg_len()
         self.telegram_rate_limit = cl_config.telegram_rate_limit_minute()
-        self.telegram_alive_message = cl_config.telegram_alive_message_hours()
 
         self.email_enable = cl_config.email_enable()
         self.email_sender = cl_config.email_sender()
@@ -376,6 +383,8 @@ class ConfigDispatcher:
         self.email_smtp_port = cl_config.email_smtp_port()
         self.email_smtp_server = cl_config.email_smtp_server()
         self.email_recipient = cl_config.email_recipient()
+
+        self.alive_message = cl_config.notification_alive_message_hours()
 
         # email section
         self.__print_configuration__()

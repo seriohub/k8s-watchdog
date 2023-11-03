@@ -47,6 +47,9 @@ class DispatcherTelegram:
 
     @handle_exceptions_async_method
     async def __can_send_message__(self):
+        """
+        Check if the rate limit for the current time is reached
+        """
         try:
             self.print_helper.info(f"__can_send_message__"
                                    f"{self.telegram_last_rate}/{self.telegram_rate_minute}")
@@ -72,6 +75,10 @@ class DispatcherTelegram:
 
     @handle_exceptions_async_method
     async def send_to_telegram(self, message):
+        """
+        Send message to telegram
+        @param message: body message
+        """
         self.print_helper.info(f"send_to_telegram")
         await self.__can_send_message__()
         if self.telegram_enable:
@@ -98,8 +105,11 @@ class DispatcherTelegram:
 
     @handle_exceptions_async_method
     async def run(self):
+        """
+        main loop
+        """
         try:
-            self.print_helper.info(f"telegram run active")
+            self.print_helper.info(f"telegram channel notification is active")
             while True:
                 # get a unit of work
                 item = await self.queue.get()
@@ -109,7 +119,7 @@ class DispatcherTelegram:
                     break
 
                 self.print_helper.info_if(self.print_debug,
-                                          f"telegram new receive element")
+                                          f"telegram channel: new element received")
 
                 if item is not None:
                     messages = self.class_strings.split_string(item,

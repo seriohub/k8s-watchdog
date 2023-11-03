@@ -46,12 +46,19 @@ class KubernetesStatusRun:
 
     @handle_exceptions_async_method
     async def __put_in_queue(self, obj):
+        """
+        Add object to a queue
+        @param obj: data to add in the queue
+        """
         self.print_helper.info_if(self.print_debug, "__put_in_queue__")
 
         await self.queue.put(obj)
 
     @handle_exceptions_async_method
     async def run(self):
+        """
+        Main loop
+        """
         self.print_helper.info(f"start main procedure seconds {self.cycle_seconds}")
 
         seconds_waiting = self.cycle_seconds + 1
@@ -80,14 +87,18 @@ class KubernetesStatusRun:
                     self.print_helper.info(f"index request {index}-{n}")
                     match index:
                         case 0:
+                            # send start data key for capturing the state in one message
+                            if self.k8s_config.disp_MSG_key_unique:
+                                data_res[self.k8s_config.disp_MSG_key_start] = "start"
+                        case 1:
                             # nodelist
-                            n = 0
+                            n = 1
                             if self.k8s_config.NODE_enable:
                                 nodelist = self.k8s_stat.get_node_list(only_problem=True)
                                 data_res[self.k8s_config.NODE_key] = nodelist
 
-                        case 1:
-                            n = 1
+                        case 2:
+                            n = 2
                             list_ns = self.k8s_stat.get_namespace()
 
                             if self.k8s_config.POD_enable:
@@ -95,24 +106,24 @@ class KubernetesStatusRun:
                                 pods_error = self.k8s_stat.get_pods(namespace=list_ns, phase_equal=False)
                                 data_res[self.k8s_config.POD_key] = pods_error
 
-                        case 2:
-                            n = 2
+                        case 3:
+                            n = 3
                             if self.k8s_config.DPL_enable:
                                 # deployment sets
                                 depl_error = self.k8s_stat.get_deployment(namespace=list_ns,
                                                                           extract_equal0=self.k8s_config.DPL_pods0,
                                                                           extract_not_equal=True)
                                 data_res[self.k8s_config.DPL_key] = depl_error
-                        case 3:
-                            n = 3
+                        case 4:
+                            n = 4
                             if self.k8s_config.SS_enable:
                                 # stateful sets
                                 sts_error = self.k8s_stat.get_stateful_set(namespace=list_ns,
                                                                            extract_equal0=self.k8s_config.SS_pods0,
                                                                            extract_not_equal=True)
                                 data_res[self.k8s_config.SS_key] = sts_error
-                        case 4:
-                            n = 4
+                        case 5:
+                            n = 5
                             # replicaset
                             if self.k8s_config.RS_enable:
                                 replicaset_error = self.k8s_stat.get_replica_set(namespace=list_ns,
@@ -120,8 +131,8 @@ class KubernetesStatusRun:
                                                                                  self.k8s_config.RS_pods0,
                                                                                  extract_not_equal=True)
                                 data_res[self.k8s_config.RS_key] = replicaset_error
-                        case 5:
-                            n = 5
+                        case 6:
+                            n = 6
                             # # daemon sets
                             if self.k8s_config.DS_enable:
                                 daemons_set_errors = self.k8s_stat.get_daemon_set(namespace=list_ns,
@@ -129,21 +140,27 @@ class KubernetesStatusRun:
                                                                                   self.k8s_config.DS_pods0,
                                                                                   extract_not_equal=True)
                                 data_res[self.k8s_config.DS_key] = daemons_set_errors
-                        case 6:
-                            n = 6
+                        case 7:
+                            n = 7
                             if self.k8s_config.PVC_enable:
                                 # persistent volume claims
                                 pvc_unbound = self.k8s_stat.get_pvc_claim(namespace=list_ns,
                                                                           equal_to_phase=False)
                                 data_res[self.k8s_config.PVC_key] = pvc_unbound
-                        case 7:
-                            n = 7
+                        case 8:
+                            n = 8
                             if self.k8s_config.PV_enable:
                                 # PV
                                 pv_unbound = self.k8s_stat.get_pv(equal_to_phase=False)
                                 data_res[self.k8s_config.PV_key] = pv_unbound
+                        case 9:
+                            n = 9
+                            # send end data key for sending message
+                            if self.k8s_config.disp_MSG_key_unique:
+                                data_res[self.k8s_config.disp_MSG_key_end] = "end"
+
                         case _:
-                            n = 8
+                            n = 10
                             seconds_waiting = 0
                             index = 0
 

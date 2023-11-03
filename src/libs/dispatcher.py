@@ -1,6 +1,3 @@
-import asyncio
-import requests
-from datetime import datetime
 from utils.config import ConfigK8sProcess
 from utils.config import ConfigDispatcher
 from utils.print_helper import PrintHelper
@@ -49,8 +46,8 @@ class Dispatcher:
                                obj):
         """
         Add new element to the queue
-        :param queue:
-        :param obj:
+        :param queue: reference to a queue
+        :param obj: object to add in the queue
         """
         self.print_helper.info_if(self.print_debug, "__put_in_queue__")
 
@@ -58,6 +55,10 @@ class Dispatcher:
 
     @handle_exceptions_async_method
     async def run(self):
+        """
+        main loop.
+        @return:
+        """
         try:
             self.print_helper.info(f"dispatcher run active")
             while True:

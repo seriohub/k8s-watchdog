@@ -16,7 +16,7 @@ class KubernetesChecker:
                  logger=None,
                  queue=None,
                  dispatcher_queue=None,
-                 dispatcher_max_msg_len=2000,
+                 dispatcher_max_msg_len=8000,
                  dispatcher_alive_message_hours=24,
                  k8s_key_config: ConfigK8sProcess = None):
 
@@ -50,8 +50,14 @@ class KubernetesChecker:
         self.cluster_name = ""
         self.force_alive_message = False
 
-        # LS 2023.11.40 add variable for sending isolate message configuration
+        # LS 2023.11.02 add variable for sending isolate message configuration
         self.send_config = False
+
+        # LS 2023.11.03 add final message for concat data all keys in a one message
+        # Not required a unique message
+        self.final_message = ""
+        # Not required a unique message
+        self.unique_message = False
 
     @handle_exceptions_async_method
     async def __put_in_queue__(self,
@@ -59,8 +65,8 @@ class KubernetesChecker:
                                obj):
         """
         Add new element to the queue
-        :param queue:
-        :param obj:
+        :param queue: reference to a queue
+        :param obj: objet to add
         """
         self.print_helper.info_if(self.print_debug, "__put_in_queue__")
 
@@ -70,12 +76,39 @@ class KubernetesChecker:
     async def send_to_dispatcher(self, message):
         """
         Send message to dispatcher engine
-        :param message:
+        @param message: message to send
         """
-        self.print_helper.info(f"send_to_dispatcher")
-        self.last_send = calendar.timegm(datetime.today().timetuple())
-        await self.__put_in_queue__(self.dispatcher_queue,
-                                    message)
+        self.print_helper.info(f"send_to_dispatcher. msg len= {len(message)}")
+        if len(message) > 0:
+            if not self.unique_message:
+                self.last_send = calendar.timegm(datetime.today().timetuple())
+                await self.__put_in_queue__(self.dispatcher_queue,
+                                            message)
+            else:
+
+                if len(self.final_message) > 0:
+                    self.print_helper.info(f"send_to_dispatcher. concat message- len({len(self.final_message)})")
+                    self.final_message = f"{self.final_message}\n{'-'*20}\n{message}"
+                else:
+                    self.print_helper.info(f"send_to_dispatcher. start message")
+                    self.final_message = f"{message}"
+
+    @handle_exceptions_async_method
+    async def send_to_dispatcher_summary(self):
+        """
+        Send summary message to dispatcher engine
+        """
+
+        self.print_helper.info(f"send_to_dispatcher_summary. message-len= {len(self.final_message)}")
+        # Chck if the final message is not empty
+        if len(self.final_message) > 10:
+            self.final_message = f"Start report\n{self.final_message}\nEnd report"
+            self.last_send = calendar.timegm(datetime.today().timetuple())
+            await self.__put_in_queue__(self.dispatcher_queue,
+                                        self.final_message)
+
+        self.final_message = ""
+        self.unique_message = False
 
     @handle_exceptions_async_method
     async def __process_key__(self,
@@ -175,7 +208,14 @@ class KubernetesChecker:
             self.print_helper.error_and_exception(f"__process_key__{title}", err)
 
     async def __concatenate__status__(self, key, key_value, msg, value):
-
+        """
+        concatenate the message. Iterate in the f
+        @param key: title of section
+        @param key_value:
+        @param msg: concatenate variable
+        @param value: dict value
+        @return:
+        """
         if isinstance(value, dict):
             key_value = False
             msg += f"{key}:\n"
@@ -218,6 +258,13 @@ class KubernetesChecker:
                     await self.__process_pv__(data)
                 elif self.k8s_config.PVC_key in data:
                     await self.__process_pvc__(data)
+                # LS 2023.11.03 add key message for sending unique message
+                elif self.k8s_config.disp_MSG_key_start in data:
+                    self.unique_message = True
+                    self.final_message = ""
+                # LS 2023.11.03 add key message for sending unique message
+                elif self.k8s_config.disp_MSG_key_end in data:
+                    await self.send_to_dispatcher_summary()
                 else:
                     self.print_helper.info(f"key not defined")
             else:
@@ -263,6 +310,10 @@ class KubernetesChecker:
 
     @handle_exceptions_async_method
     async def __process_cluster_name__(self, data):
+        """
+        Obtain cluster name
+        @param data:
+        """
         self.print_helper.info(f"__process_cluster_name__")
 
         nodes_name = data[self.k8s_config.CLUSTER_Name_key]

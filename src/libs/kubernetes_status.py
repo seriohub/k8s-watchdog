@@ -104,6 +104,10 @@ class KubernetesStatus:
                                            cluster_name=self.cluster_name)
 
     def get_cluster_name_from_config_file(self):
+        """
+        Obtain the name of current cluster reading the config file
+        @return:
+        """
         try:
             cluster_name = None
             if not self.k8s_in_cluster:
@@ -121,6 +125,10 @@ class KubernetesStatus:
             return None
 
     def get_cluster_name_from_in_cluster_config(self):
+        """
+        Obtain the name of current cluster when the script is running in a K8s
+        @return:
+        """
         try:
             cluster_name = None
             if self.k8s_in_cluster:
@@ -137,6 +145,10 @@ class KubernetesStatus:
             return None
 
     def get_cluster_name(self):
+        """
+        Try to obtain the cluster name
+        @return:
+        """
         cluster_name = "Unknown"
         try:
             self.print_helper.info(f"get_cluster_name")
@@ -166,6 +178,10 @@ class KubernetesStatus:
             return cluster_name
 
     def get_cluster_name_loaded(self):
+        """
+        return the current cluster name
+        @return:
+        """
         self.print_helper.info(f"get_cluster_name_loaded {self.cluster_name}")
         return self.cluster_name
 
@@ -173,6 +189,10 @@ class KubernetesStatus:
         return self.k8s_nodes.get_node_list(only_problem)
 
     def get_namespace(self):
+        """
+        Return the list of namespaces found
+        @return:
+        """
         return self.k8s_namespace.get_namespace()
 
     def get_pods(self,
@@ -180,7 +200,15 @@ class KubernetesStatus:
                  label_selector: str = '',
                  phase=None,
                  phase_equal=False):
-
+        """
+        Return the list of pods filtered by status or namespace or phase
+        @param namespace: list of namespaces
+        @param label_selector: label selector filter
+        @param phase: list of phase required
+        @param phase_equal: if true return the pods in the required phases otherwise return the pods are not in required
+                            phases
+        @return:
+        """
         if phase is None:
             phase = {}
         return self.k8s_pods.get_pods(namespace, label_selector, phase, phase_equal)
@@ -188,7 +216,13 @@ class KubernetesStatus:
     def get_stateful_set(self, namespace,
                          extract_not_equal=False,
                          extract_equal0=False):
-
+        """
+        Return the State Ful set items filtered by following parameters
+        @param namespace: list of namespace
+        @param extract_not_equal: if true return the items where the number required not equal the available pods
+        @param extract_equal0: if true return the items scaled to 0
+        @return:
+        """
         return self.k8s_sfs.get_stateful_set(namespace,
                                              extract_not_equal,
                                              extract_equal0)
@@ -197,7 +231,13 @@ class KubernetesStatus:
                         namespace,
                         extract_not_equal=False,
                         extract_equal0=False):
-
+        """
+        Return the replicaset filtered by following parameters
+        @param namespace: list of namespace
+        @param extract_not_equal: if true return the items where the number required not equal the available pods
+        @param extract_equal0: if true return the items scaled to 0
+        @return:
+        """
         return self.k8s_rps.get_replica_set(namespace,
                                             extract_not_equal,
                                             extract_equal0)
@@ -206,6 +246,13 @@ class KubernetesStatus:
                        namespace,
                        extract_not_equal=False,
                        extract_equal0=False):
+        """
+        Return the deployment filtered by following parameters
+        @param namespace: list of namespace
+        @param extract_not_equal: if true return the items where the number required not equal the available pods
+        @param extract_equal0: if true return the items scaled to 0
+        @return:
+        """
 
         return self.k8s_deployment.get_deployment(namespace,
                                                   extract_not_equal,
@@ -215,6 +262,13 @@ class KubernetesStatus:
                        namespace,
                        extract_not_equal=False,
                        extract_equal0=False):
+        """
+        Return the daemon set filtered by following parameters
+        @param namespace: list of namespace
+        @param extract_not_equal: if true return the items where the number required not equal the available pods
+        @param extract_equal0: if true return the items scaled to 0
+        @return:
+        """
 
         return self.k8s_dms.get_daemon_set(namespace,
                                            extract_not_equal,
@@ -224,6 +278,13 @@ class KubernetesStatus:
                       namespace,
                       phase: str = 'Bound',
                       equal_to_phase=False):
+        """
+        Return the Persistent Volumes Claims filtered by following parameters
+        @param namespace: list of namespace
+        @param phase: string
+        @param equal_to_phase:if true return the PVC in phase otherwise return the PVC not in phase
+        @return:
+        """
         return self.k8s_pv_c.get_pvc_claim(namespace,
                                            phase,
                                            equal_to_phase)
@@ -231,5 +292,11 @@ class KubernetesStatus:
     def get_pv(self,
                phase: str = 'Bound',
                equal_to_phase=False):
+        """
+          Return the Persistent Volumes claims filtered by following parameters
+          @param phase: string
+          @param equal_to_phase:if true return the PV in phase otherwise return the PVC not in phase
+          @return:
+          """
         return self.k8s_pv_c.get_pv(phase,
                                     equal_to_phase)

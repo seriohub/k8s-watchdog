@@ -1,11 +1,7 @@
-import asyncio
-import requests
-from datetime import datetime
 from utils.config import ConfigK8sProcess
 from utils.config import ConfigDispatcher
 from utils.print_helper import PrintHelper
 from utils.handle_error import handle_exceptions_async_method
-from utils.strings import ClassString
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -41,12 +37,13 @@ class DispatcherEmail:
 
     @handle_exceptions_async_method
     async def send_email(self, message):
+        """
+        Send email func
+        @param message: body message
+        """
         try:
             self.print_helper.info(f"send_email")
             if self.dispatcher_config.email_enable:
-                # if len(self.dispatcher_config.email_smtp_server) > 0
-                #     and self.dispatcher_config.email_smtp_server>0
-                # and len(self.dispatcher_config.email_sender) > 0 and len(email_sender_password)>0 :
                 if ((len(self.dispatcher_config.email_smtp_server) > 0)
                         and (len(self.dispatcher_config.email_smtp_server) > 0)
                         and (len(self.dispatcher_config.email_sender) > 0)
@@ -77,18 +74,20 @@ class DispatcherEmail:
                         server.quit()
                         self.print_helper.info(f"Email sent successfully to {self.dispatcher_config.email_recipient}")
                     except Exception as e:
-                        self.print_helper.error(f"error {str(e)}")
+                        self.print_helper.error(f"send_email in error {str(e)}")
                 else:
-                    self.print_helper.error(f"email sender configuration is not complete.")
-            else:
-                self.print_helper.info(f"send_email[Disable send...only std out]=\n{message}")
+                    self.print_helper.error(f"email configuration is not complete.")
+
         except Exception as err:
             self.print_helper.error_and_exception(f"send_email", err)
 
     @handle_exceptions_async_method
     async def run(self):
+        """
+        Main loop
+        """
         try:
-            self.print_helper.info(f"telegram run active")
+            self.print_helper.info(f"email channel notification is active")
             while True:
                 # get a unit of work
                 item = await self.queue.get()
@@ -98,12 +97,10 @@ class DispatcherEmail:
                     break
 
                 self.print_helper.info_if(self.print_debug,
-                                          f"telegram new receive element")
+                                          f"email channel: new element received")
 
                 if item is not None:
                     await self.send_email(item)
-
-                    # await self.send_to_telegram(item)
 
         except Exception as err:
             self.print_helper.error_and_exception(f"run", err)

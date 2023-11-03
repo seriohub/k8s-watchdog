@@ -26,22 +26,15 @@ print_helper = PrintHelper('K8s', None)
 async def main_start(seconds=120,
                      load_kube_config=False,
                      config_file=None,
-                     # telegram_enabled=False,
-                     # telegram_token_id='',
-                     # telegram_id='',
-                     # telegram_max_len=2000,
-                     # telegram_rate_minute=10,
-                     # telegram_alive_msg_hours=0,
                      disp_class: ConfigDispatcher = None,
                      k8s_class: ConfigK8sProcess = None):
     """
 
-    :param telegram_alive_msg_hours: 
-    :param seconds:
-    :param load_kube_config:
-    :param config_file:
-    # :param disp_class:
-    # :param k8s_class:
+    :param seconds: time to scrapy the k8s system
+    :param load_kube_config: load kube config ( if False use in cluster method)
+    :param config_file: optional config file
+    :param disp_class: class dispatcher configuration
+    :param k8s_class: class k8s configuration
     """
     # create the shared queue
     queue = asyncio.Queue()
@@ -124,13 +117,7 @@ if __name__ == "__main__":
     debug_on = config_prg.internal_debug_enable()
     clk8s_setup = ConfigK8sProcess(config_prg)
 
-    # telegram_enable = config_prg.telegram_enable()
-    # telegram_chat_id = config_prg.telegram_chat_id()
-    # telegram_token = config_prg.telegram_token()
-    # telegram_max_msg_len = config_prg.telegram_max_msg_len()
-    # telegram_rate_limit = config_prg.telegram_rate_limit_minute()
-    # telegram_alive_message = config_prg.telegram_alive_message_hours()
-    # LS 2023.10.31 add configuration dispatcher channels
+    # LS 2023.10.31 moved in dispatcher channels class
     clk8s_setup_disp = ConfigDispatcher(config_prg)
 
     # kube config method
@@ -150,12 +137,6 @@ if __name__ == "__main__":
     asyncio.run(main_start(loop_seconds,
                            k8s_load_kube_config_method,
                            kube_config_file,
-                           # telegram_enable,
-                           # telegram_token,
-                           # telegram_chat_id,
-                           # telegram_max_msg_len,
-                           # telegram_rate_limit,
-                           # telegram_alive_message,
                            clk8s_setup_disp,
                            clk8s_setup
                            ))

@@ -9,9 +9,9 @@ Thank you for your understanding and cooperation.
 
 This project is designed for monitoring the health of Kubernetes environment and alert when something is not working.
 The scope is to check if the status of the elements are  in ready, running, bound state or if the amount of pods requested is always satisfied. 
-Property such as CPU or memory usage are not checked to trigger an alarm.
+Property such as CPU or memory usage are not checked to trigger an alarm and/or warning.
 
-The user chooses the synchronization timer and which elements to monitor.
+The user chooses the synchronization cycles and the elements to monitor.
 
 ## Features
 
@@ -29,22 +29,28 @@ Monitor the status of :
 - DaemonSet
 - ReplicaSet
 
-### 3. Monitor Persistent Volume and  Persistent Volume Claim
+### 3. Monitor Persistent Volumes and  Persistent Volume Claims
 
 Monitor the status of :
 
 - Persistent Volume
 - Persistent Volume Claim  
 
-### 4. Telegram Integration
+### 4. Channels notifications
 
-Receive the alert and the solved message via Telegram, allowing immediate action.
+Receive the alerts and the solved messages via notifications channels, allowing immediate action.
+
+Available plugin:
+- Telegram
+- email
+
 
 ## Requirements
 
 - Python 3.x
 - kubectl cli (if [Run in kubernetes](#run-in-kubernetes))
-- Telegram API credentials
+- Telegram API credentials (if telegram notification is enabled)
+- SMTP and user account (if email notification is enabled)
 
 ## Configuration
 
@@ -56,10 +62,16 @@ Receive the alert and the solved message via Telegram, allowing immediate action
 | `PROCESS_KUBE_CONFIG`       | String |         | Path to the kube config file. This is mandatory when the script runs outside the Kubernetes cluster, either in a docker container or as a native script. |
 | `PROCESS_CLUSTER_NAME` * ** | String |         | Force the cluster name and it appears in the telegram message                                                                                            |
 | `PROCESS_CYCLE_SEC`         | Int    | 120     | Cycle time (seconds)                                                                                                                                     |
-| `TELEGRAM_ENABLE`    *      | Bool   | True    | Enable sending messages                                                                                                                                  |
+| `TELEGRAM_ENABLE`    *      | Bool   | True    | Enable telegram notification                                                                                                                             |
 | `TELEGRAM_API_TOKEN` *      | String |         | Token for access to Telegram bot via Http API                                                                                                            |
 | `TELEGRAM_CHAT_ID`   *      | String |         | Telegram chat id where send the notifications                                                                                                            |
-| `K8S_NODE`                  | Bool   | True    | Enable Nodes watcher                                                                                                                                     |
+| `EMAIL_ENABLE`       *      | Bool   | False   | Enable email notification                                                                                                                                |
+| `EMAIL_SMTP_SERVER`  *      | String |         | SMTP server                                                                                                                                              |
+| `EMAIL_SMTP_PORT`    *      | int    | 587     | SMTP port                                                                                                                                                |
+| `EMAIL_ACCOUNT`      *      | String |         | user name account                                                                                                                                        |
+| `EMAIL_PASSWORD`     *      | String |         | password account                                                                                                                                         |
+| `EMAIL_RECIPIENTS`   *      | Bool   |         | Email recipients                                                                                                                                         |
+| `K8S_NODES`                 | Bool   | True    | Enable Nodes watcher                                                                                                                                     |
 | `K8S_PODS`                  | Bool   | True    | Enable Pods watcher                                                                                                                                      |
 | `K8S_DEPLOYMENT`            | Bool   | True    | Enable Deployment watcher                                                                                                                                |
 | `K8S_STATEFUL_SETS`         | Bool   | True    | Enable StatefulSets watcher                                                                                                                              |
