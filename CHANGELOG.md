@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2023-11-03
+**Implemented enhancements:**
+- Added mechanism to handle more channels of notifications
+- Added email channel notification
+- Added mechanism for optimizing the output message
+
+
 ## [0.1.5] - 2023-10-29
 **Implemented enhancements:**
 - In the alive message added the name of the cluster and the time without warning/alarm

@@ -2,14 +2,17 @@ import asyncio
 import os
 
 from utils.print_helper import PrintHelper, LLogger
-from utils.config import ConfigProgram, ConfigK8sProcess
+from utils.config import ConfigProgram
+from utils.config import ConfigK8sProcess
+from utils.config import ConfigDispatcher
 from libs.kubernetes_status_run import KubernetesStatusRun
 from libs.kubernetes_checker import KubernetesChecker
-from libs.kubernetes_telegram import KubernetesTelegram
+from libs.dispatcher import Dispatcher
+from libs.dispatcher_telegram import DispatcherTelegram
+from libs.dispatcher_email import DispatcherEmail
 from utils.handle_error import handle_exceptions_async_method
 from utils.version import __version__
 from utils.version import __date__
-
 
 # init logger engine
 init_logger = LLogger()
@@ -23,32 +26,24 @@ print_helper = PrintHelper('K8s', None)
 async def main_start(seconds=120,
                      load_kube_config=False,
                      config_file=None,
-                     telegram_enabled=False,
-                     telegram_token_id='',
-                     telegram_id='',
-                     telegram_max_len=2000,
-                     telegram_rate_minute=10,
-                     telegram_alive_msg_hours=0,
+                     disp_class: ConfigDispatcher = None,
                      k8s_class: ConfigK8sProcess = None):
     """
 
-    :param telegram_alive_msg_hours: 
-    :param seconds:
-    :param load_kube_config:
-    :param config_file:
-    :param telegram_enabled:
-    :param telegram_token_id:
-    :param telegram_id:
-    :param telegram_max_len:
-    :param telegram_rate_minute:
-    :param k8s_class:
+    :param seconds: time to scrapy the k8s system
+    :param load_kube_config: load kube config ( if False use in cluster method)
+    :param config_file: optional config file
+    :param disp_class: class dispatcher configuration
+    :param k8s_class: class k8s configuration
     """
     # create the shared queue
     queue = asyncio.Queue()
-    queue_telegram = asyncio.Queue()
+    queue_dispatcher = asyncio.Queue()
+    queue_dispatcher_telegram = asyncio.Queue()
+    queue_dispatcher_mail = asyncio.Queue()
 
     # Force separate telegram handler
-    telegram_separate_cor = True
+    # telegram_separate_cor = True
 
     k8s_stat_read = KubernetesStatusRun(kube_load_method=load_kube_config,
                                         kube_config_file=config_file,
@@ -61,35 +56,50 @@ async def main_start(seconds=120,
     k8s_stat_checker = KubernetesChecker(debug_on=debug_on,
                                          logger=logger,
                                          queue=queue,
-                                         telegram_queue=queue_telegram,
-                                         telegram_max_msg_len=telegram_max_len,
-                                         telegram_alive_message_hours=telegram_alive_msg_hours,
+                                         dispatcher_queue=queue_dispatcher,
+                                         dispatcher_max_msg_len=disp_class.max_msg_len,
+                                         dispatcher_alive_message_hours=disp_class.alive_message,
                                          k8s_key_config=k8s_class
                                          )
-    k8s_stat_telegram = KubernetesTelegram(debug_on=debug_on,
-                                           logger=logger,
-                                           queue=queue_telegram,
-                                           telegram_enable=telegram_enabled,
-                                           telegram_separate=telegram_separate_cor,
-                                           telegram_api_token=telegram_token_id,
-                                           telegram_chat_id=telegram_id,
-                                           telegram_max_msg_len=telegram_max_len,
-                                           telegram_rate_minute=telegram_rate_minute,
-                                           k8s_key_config=k8s_class
-                                           )
+
+    dispatcher_main = Dispatcher(debug_on=debug_on,
+                                 logger=logger,
+                                 queue=queue_dispatcher,
+                                 queue_telegram=queue_dispatcher_telegram,
+                                 queue_mail=queue_dispatcher_mail,
+                                 dispatcher_config=disp_class,
+                                 k8s_key_config=k8s_class
+                                 )
+
+    dispatcher_telegram = DispatcherTelegram(debug_on=debug_on,
+                                             logger=logger,
+                                             queue=queue_dispatcher_telegram,
+                                             dispatcher_config=disp_class,
+                                             k8s_key_config=k8s_class
+                                             )
+
+    dispatcher_mail = DispatcherEmail(debug_on=debug_on,
+                                      logger=logger,
+                                      queue=queue_dispatcher_mail,
+                                      dispatcher_config=disp_class,
+                                      k8s_key_config=k8s_class
+                                      )
 
     # loop = asyncio.get_event_loop()
     try:
         while True:
             print_helper.info("try to restart the service")
             # run the producer and consumers
-            if telegram_separate_cor:
-                await asyncio.gather(k8s_stat_read.run(),
-                                     k8s_stat_checker.run(),
-                                     k8s_stat_telegram.run())
-            else:
-                await asyncio.gather(k8s_stat_read.run(),
-                                     k8s_stat_checker.run())
+            # if telegram_separate_cor:
+            await asyncio.gather(k8s_stat_read.run(),
+                                 k8s_stat_checker.run(),
+                                 dispatcher_main.run(),
+                                 dispatcher_telegram.run(),
+                                 dispatcher_mail.run())
+
+            # else:
+            #    await asyncio.gather(k8s_stat_read.run(),
+            #                         k8s_stat_checker.run())
             print_helper.info("the service is not in run")
 
     except KeyboardInterrupt:
@@ -107,13 +117,8 @@ if __name__ == "__main__":
     debug_on = config_prg.internal_debug_enable()
     clk8s_setup = ConfigK8sProcess(config_prg)
 
-    # telegram section
-    telegram_enable = config_prg.telegram_enable()
-    telegram_chat_id = config_prg.telegram_chat_id()
-    telegram_token = config_prg.telegram_token()
-    telegram_max_msg_len = config_prg.telegram_max_msg_len()
-    telegram_rate_limit = config_prg.telegram_rate_limit_minute()
-    telegram_alive_message = config_prg.telegram_alive_message_hours()
+    # LS 2023.10.31 moved in dispatcher channels class
+    clk8s_setup_disp = ConfigDispatcher(config_prg)
 
     # kube config method
     k8s_load_kube_config_method = config_prg.k8s_load_kube_config_method()
@@ -132,11 +137,6 @@ if __name__ == "__main__":
     asyncio.run(main_start(loop_seconds,
                            k8s_load_kube_config_method,
                            kube_config_file,
-                           telegram_enable,
-                           telegram_token,
-                           telegram_chat_id,
-                           telegram_max_msg_len,
-                           telegram_rate_limit,
-                           telegram_alive_message,
+                           clk8s_setup_disp,
                            clk8s_setup
                            ))

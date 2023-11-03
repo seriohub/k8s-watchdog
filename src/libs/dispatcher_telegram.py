@@ -2,11 +2,13 @@ import asyncio
 import requests
 from datetime import datetime
 from utils.config import ConfigK8sProcess
+from utils.config import ConfigDispatcher
 from utils.print_helper import PrintHelper
 from utils.handle_error import handle_exceptions_async_method
+from utils.strings import ClassString
 
 
-class KubernetesTelegram:
+class DispatcherTelegram:
     """
     Provide a wrapper for sending data over Telegram
     """
@@ -15,15 +17,10 @@ class KubernetesTelegram:
                  debug_on=True,
                  logger=None,
                  queue=None,
-                 telegram_enable=True,
-                 telegram_separate=True,
-                 telegram_api_token='',
-                 telegram_chat_id='',
-                 telegram_max_msg_len=2000,
-                 telegram_rate_minute=10,
+                 dispatcher_config: ConfigDispatcher = None,
                  k8s_key_config: ConfigK8sProcess = None):
 
-        self.print_helper = PrintHelper('k8s_telegram', logger)
+        self.print_helper = PrintHelper('dispatcher_telegram', logger)
         self.print_debug = debug_on
 
         self.print_helper.debug_if(self.print_debug,
@@ -33,19 +30,26 @@ class KubernetesTelegram:
         if k8s_key_config is not None:
             self.k8s_config = k8s_key_config
 
-        self.execute_routine = telegram_separate
         self.queue = queue
-        self.telegram_api_token = telegram_api_token
-        self.telegram_chat_ID = telegram_chat_id
-        self.telegram_enable = telegram_enable
-        self.telegram_max_msg_len = telegram_max_msg_len
-        self.telegram_rate_minute = telegram_rate_minute
+
+        self.telegram_api_token = dispatcher_config.telegram_token
+        self.telegram_chat_ID = dispatcher_config.telegram_chat_id
+        self.telegram_enable = dispatcher_config.telegram_enable
+        self.telegram_max_msg_len = dispatcher_config.telegram_max_msg_len
+        self.telegram_rate_minute = dispatcher_config.telegram_rate_limit
 
         self.telegram_last_minute = 0
         self.telegram_last_rate = 0
 
+        # init class string
+        self.class_strings = ClassString(debug_on=self.print_debug,
+                                         print_helper=self.print_helper)
+
     @handle_exceptions_async_method
     async def __can_send_message__(self):
+        """
+        Check if the rate limit for the current time is reached
+        """
         try:
             self.print_helper.info(f"__can_send_message__"
                                    f"{self.telegram_last_rate}/{self.telegram_rate_minute}")
@@ -71,8 +75,11 @@ class KubernetesTelegram:
 
     @handle_exceptions_async_method
     async def send_to_telegram(self, message):
+        """
+        Send message to telegram
+        @param message: body message
+        """
         self.print_helper.info(f"send_to_telegram")
-        print(f"{message}")
         await self.__can_send_message__()
         if self.telegram_enable:
             if len(self.telegram_api_token) > 0 and len(self.telegram_chat_ID) > 0:
@@ -94,28 +101,31 @@ class KubernetesTelegram:
                 if len(self.telegram_chat_ID) == 0:
                     self.print_helper.error(f"send_to_telegram. chatID is not defined")
         else:
-            self.print_helper.info(f"send_to_telegram[Disable send...only std out]={message}")
+            self.print_helper.info(f"send_to_telegram[Disable send...only std out]=\n{message}")
 
     @handle_exceptions_async_method
     async def run(self):
+        """
+        main loop
+        """
         try:
-            self.print_helper.info(f"telegram run Active: {self.execute_routine}")
-            # last_send = 0
-            if self.execute_routine:
-                while True:
-                    # get a unit of work
-                    item = await self.queue.get()
+            self.print_helper.info(f"telegram channel notification is active")
+            while True:
+                # get a unit of work
+                item = await self.queue.get()
 
-                    # check for stop signal
-                    if item is None:
-                        break
+                # check for stop signal
+                if item is None:
+                    break
 
-                    self.print_helper.info_if(self.print_debug,
-                                              f"telegram new receive element")
+                self.print_helper.info_if(self.print_debug,
+                                          f"telegram channel: new element received")
 
-                    if item is not None:
-                        await self.send_to_telegram(item)
+                if item is not None:
+                    messages = self.class_strings.split_string(item,
+                                                               self.telegram_max_msg_len, '\n')
+                    for message in messages:
+                        await self.send_to_telegram(message)
 
-                # self.print_helper('telegram: end loop')
         except Exception as err:
             self.print_helper.error_and_exception(f"run", err)
