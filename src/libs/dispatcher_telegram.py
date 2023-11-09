@@ -121,7 +121,7 @@ class DispatcherTelegram:
                 self.print_helper.info_if(self.print_debug,
                                           f"telegram channel: new element received")
 
-                if item is not None:
+                if item is not None and len(item) > 0:
                     messages = self.class_strings.split_string(item,
                                                                self.telegram_max_msg_len, '\n')
                     for message in messages:

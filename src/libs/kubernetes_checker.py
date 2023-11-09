@@ -48,7 +48,7 @@ class KubernetesChecker:
         self.last_send = calendar.timegm(datetime.today().timetuple())
 
         self.cluster_name = ""
-        self.force_alive_message = False
+        self.force_alive_message = True
 
         # LS 2023.11.02 add variable for sending isolate message configuration
         self.send_config = False
@@ -73,14 +73,15 @@ class KubernetesChecker:
         await queue.put(obj)
 
     @handle_exceptions_async_method
-    async def send_to_dispatcher(self, message):
+    async def send_to_dispatcher(self, message, force_message=False):
         """
         Send message to dispatcher engine
+        @param force_message: send message immediately
         @param message: message to send
         """
         self.print_helper.info(f"send_to_dispatcher. msg len= {len(message)}")
         if len(message) > 0:
-            if not self.unique_message:
+            if not self.unique_message or force_message:
                 self.last_send = calendar.timegm(datetime.today().timetuple())
                 await self.__put_in_queue__(self.dispatcher_queue,
                                             message)
@@ -273,7 +274,7 @@ class KubernetesChecker:
             # dispatcher alive message
             if self.alive_message_seconds > 0:
                 diff = calendar.timegm(datetime.today().timetuple()) - self.last_send
-
+                # add parameter force message
                 if diff > self.alive_message_seconds or self.force_alive_message:
                     self.print_helper.info(f"__unpack_data.send alive message")
                     await self.send_to_dispatcher(f"Cluster: {self.cluster_name}"
@@ -281,7 +282,7 @@ class KubernetesChecker:
                                                   f"\nThis is an alive message"
                                                   f"\nNo warning/errors were triggered in the last "
                                                   f"{int(self.alive_message_seconds / 3600)} "
-                                                  f"hours ")
+                                                  f"hours ", True)
                     self.force_alive_message = False
 
         except Exception as err:

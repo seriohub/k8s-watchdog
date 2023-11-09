@@ -69,7 +69,7 @@ class DispatcherEmail:
                         server.login(self.dispatcher_config.email_sender,
                                      self.dispatcher_config.email_sender_password)
                         server.sendmail(self.dispatcher_config.email_sender,
-                                        self.dispatcher_config.email_recipient,
+                                        self.dispatcher_config.email_recipient.split(';'),
                                         msg.as_string())
                         server.quit()
                         self.print_helper.info(f"Email sent successfully to {self.dispatcher_config.email_recipient}")
@@ -99,7 +99,7 @@ class DispatcherEmail:
                 self.print_helper.info_if(self.print_debug,
                                           f"email channel: new element received")
 
-                if item is not None:
+                if item is not None and len(item) > 0:
                     await self.send_email(item)
 
         except Exception as err:
